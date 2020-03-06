@@ -19,6 +19,7 @@ PACKAGES += Instances
 PACKAGES += Csystems
 PACKAGES += Bsystems
 PACKAGES += Cubical
+PACKAGES += ECategories
 PACKAGES += Initiality
 PACKAGES += TypeConstructions
 ############################################
