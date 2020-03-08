@@ -8,8 +8,12 @@
   Should not be relicensed (e.g. incorporated into [UniMath/UniMath]) until Wilander has been consulted.
 *)
 
-Require Import ECats.Auxiliary.
+Require Import UniMath.Foundations.All.
+Require Import UniMath.MoreFoundations.All.
+Require Import TypeTheory.ECategories.Auxiliary.
 
+Declare Scope setoid_scope.
+Declare Scope setoid_eq_scope.
 Delimit Scope setoid_scope with setoid.
 Delimit Scope setoid_eq_scope with setoid_eq.
 Open Scope setoid_scope.
@@ -75,7 +79,7 @@ Notation "p ⊙ q" := (tra_setoid q p)
     (at level 20, right associativity) : setoid_eq_scope.
 
 (** * Setoid maps *)
-
+ 
 Record setoid_map_type (A B : setoid)
 := {
     setoid_map_function :> A → B;
@@ -98,7 +102,7 @@ Defined.
 Notation Build_setoid_map := Build_setoid_map_type.
 
 Notation "A ⇒ B" := (setoid_map A B)
-    (at level 99, right associativity) : type_scope.
+    (at level 95, right associativity) : type_scope.
 
 (** This helper lemma is vacuous as a definition,
   but is often useful in tactic proofs:
@@ -110,7 +114,7 @@ Notation "A ⇒ B" := (setoid_map A B)
   TODO: find name that makes more sense in our context. *)
 Definition ap10_setoid {A B} (f g : A ⇒ B)
   : f ≈ g -> ∏x:A, f x ≈ g x
-:= idmap.
+:= idfun _.
 
 (** Extensionality lemmas for multi-ary setoid maps.
 
@@ -217,7 +221,7 @@ Qed.
 
 Definition idmap_setoid {A} : A ⇒ A.
 Proof.
-  apply (Build_setoid_map _ _ idmap); swesetoid.
+  apply (Build_setoid_map _ _ (idfun _)); swesetoid.
 Defined.
 
 Definition comp_setoid {A B} (C : setoid) : (B ⇒ C) ⇒ (A ⇒ B) ⇒ (A ⇒ C).
@@ -250,14 +254,15 @@ Local Open Scope path_scope.
 
 Definition discrete_setoid (X : Type) : setoid.
 Proof.
-  apply (Build_setoid_flat X (λ x y, x = y)); eauto using inverse, concat.
+  apply (Build_setoid_flat X (λ x y, x = y));
+    eauto using pathsinv0, pathscomp0.
 Defined.
 
 Definition nat_setoid := discrete_setoid nat.
 
 Definition indiscrete_setoid (X : Type) : setoid.
 Proof.
-  apply (Build_setoid_flat X (λ x y, ⊤)); intros; exact tt.
+  apply (Build_setoid_flat X (λ x y, unit)); intros; exact tt.
 Defined.
 
 (* Needed since indiscrete setoid equality types often get unfolded quickly,
@@ -265,20 +270,20 @@ Defined.
   basic setoid constructs. *)  
 Hint Immediate tt : swesetoid.
 
-Definition empty_setoid := indiscrete_setoid ⊥.
+Definition empty_setoid := indiscrete_setoid empty.
 
-Definition unit_setoid := indiscrete_setoid ⊤.
+Definition unit_setoid := indiscrete_setoid unit.
 
 Definition sum_setoid (A B : setoid) : setoid.
 Proof.
-  apply (Build_setoid_flat (A + B)
+  apply (Build_setoid_flat (A + B)%type
     (λ a b, match a with
               | inl α => match b with
                            | inl α' => α ≈ α'
-                           | inr _  => ⊥
+                           | inr _  => empty
                          end
               | inr β => match b with
-                           | inl _  => ⊥
+                           | inl _  => empty
                            | inr β' => β ≈ β'
                          end
             end)).

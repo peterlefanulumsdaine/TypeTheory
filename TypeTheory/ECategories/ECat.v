@@ -1,7 +1,6 @@
 
-Require Import ECats.HoTT_Imports.
-
-Require Import ECats.Notations ECats.Auxiliary ECats.SwedishSetoids.
+Require Import TypeTheory.ECategories.Auxiliary
+        TypeTheory.ECategories.SwedishSetoids.
 
 Delimit Scope ecats_scope with ecats.
 Open Scope ecats_scope.
