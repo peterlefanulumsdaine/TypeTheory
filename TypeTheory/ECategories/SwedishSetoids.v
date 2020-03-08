@@ -4,11 +4,16 @@
   equality is (universe-polymorphically) Type-valued,
   not Prop-valued as in “French setoids”.
 
-  NOTE: Incorporated from earlier work 2010–17 by Gylterud, Lumsdaine, Palmgren, Wilander.  Should not be relicensed or incorporated into UniMath proper until all contributors have been consulted.
+  NOTE: Adapted from earlier work 2010–16 by Gylterud, Lumsdaine, Wilander, Palmgren.
+  Should not be relicensed (e.g. incorporated into [UniMath/UniMath]) until Wilander has been consulted.
 *)
 
-Require Import ECats.Notations ECats.Auxiliary.
+Require Import UniMath.Foundations.All.
+Require Import UniMath.MoreFoundations.All.
+Require Import TypeTheory.ECategories.Auxiliary.
 
+Declare Scope setoid_scope.
+Declare Scope setoid_eq_scope.
 Delimit Scope setoid_scope with setoid.
 Delimit Scope setoid_eq_scope with setoid_eq.
 Open Scope setoid_scope.
@@ -20,9 +25,9 @@ Set Universe Polymorphism.
 
 Record Is_Equiv_Relation {A : Type} (R : A -> A -> Type) : Type
 := {
-    refl_eqrel  : ∀x, R x x;
-    sym_eqrel   : ∀x y, R x y → R y x;
-    trans_eqrel : ∀x y z, R x y → R y z → R x z
+    refl_eqrel  : ∏x, R x x;
+    sym_eqrel   : ∏x y, R x y → R y x;
+    trans_eqrel : ∏x y z, R x y → R y z → R x z
   }.
 
 Record setoid : Type
@@ -57,9 +62,9 @@ Hint Resolve tra_setoid : swesetoid. (* The warning here is expected *)
 Ltac swesetoid := simpl; auto with swesetoid; eauto with swesetoid.
 
 Definition Build_setoid_flat (X : Type) (E : X -> X -> Type)
-  : (∀x, E x x)
-  -> (∀x y, E x y → E y x)
-  -> (∀x y z, E x y → E y z → E x z)
+  : (∏x, E x x)
+  -> (∏x y, E x y → E y x)
+  -> (∏x y z, E x y → E y z → E x z)
   -> setoid
 := fun E_refl E_sym E_trans
      => Build_setoid X E (Build_Is_Equiv_Relation X E E_refl E_sym E_trans).
@@ -74,12 +79,12 @@ Notation "p ⊙ q" := (tra_setoid q p)
     (at level 20, right associativity) : setoid_eq_scope.
 
 (** * Setoid maps *)
-
+ 
 Record setoid_map_type (A B : setoid)
 := {
     setoid_map_function :> A → B;
     ap_setoid
-      : ∀x y : A, x ≈ y → setoid_map_function x ≈ setoid_map_function y
+      : ∏x y : A, x ≈ y → setoid_map_function x ≈ setoid_map_function y
   }.
 
 (* [ap_setoid] is named as the setoid analogue of the HoTT library’s [ap] *)
@@ -90,14 +95,14 @@ Hint Resolve ap_setoid : swesetoid.
 Definition setoid_map (A B : setoid) : setoid.
 Proof.
   apply (Build_setoid_flat (setoid_map_type A B)
-    (λ f g, ∀x:A, f x ≈ g x));
+    (λ f g, ∏x:A, f x ≈ g x));
   swesetoid.
 Defined.
 
 Notation Build_setoid_map := Build_setoid_map_type.
 
 Notation "A ⇒ B" := (setoid_map A B)
-    (at level 99, right associativity) : type_scope.
+    (at level 95, right associativity) : type_scope.
 
 (** This helper lemma is vacuous as a definition,
   but is often useful in tactic proofs:
@@ -108,8 +113,8 @@ Notation "A ⇒ B" := (setoid_map A B)
 
   TODO: find name that makes more sense in our context. *)
 Definition ap10_setoid {A B} (f g : A ⇒ B)
-  : f ≈ g -> ∀x:A, f x ≈ g x
-:= idmap.
+  : f ≈ g -> ∏x:A, f x ≈ g x
+:= idfun _.
 
 (** Extensionality lemmas for multi-ary setoid maps.
 
@@ -146,8 +151,8 @@ Qed.
 (* Construction lemmas for multi-ary setoid maps. *)
 
 Lemma binsetoid_map_helper {A B C : setoid} (f : A → B → C)
-  (p : ∀a a', a ≈ a' → ∀b, f a b ≈ f a' b)
-  (q : ∀a b b', b ≈ b' → f a b ≈ f a b')
+  (p : ∏a a', a ≈ a' → ∏b, f a b ≈ f a' b)
+  (q : ∏a b b', b ≈ b' → f a b ≈ f a b')
 : A ⇒ B ⇒ C.
 Proof.
   apply (Build_setoid_map _ (B ⇒ C)
@@ -155,9 +160,9 @@ Proof.
 Defined.
 
 Lemma trinsetoid_map_helper {A B C D : setoid} (f : A → B → C → D)
-  (p : ∀a a', a ≈ a' → ∀b c, f a b c ≈ f a' b c)
-  (q : ∀a b b', b ≈ b' → ∀c, f a b c ≈ f a b' c)
-  (r : ∀a b c c', c ≈ c' → f a b c ≈ f a b c')
+  (p : ∏a a', a ≈ a' → ∏b c, f a b c ≈ f a' b c)
+  (q : ∏a b b', b ≈ b' → ∏c, f a b c ≈ f a b' c)
+  (r : ∏a b c c', c ≈ c' → f a b c ≈ f a b c')
 : A ⇒ B ⇒ C ⇒ D.
 Proof.
   apply (Build_setoid_map _ (B ⇒ C ⇒ D))
@@ -216,7 +221,7 @@ Qed.
 
 Definition idmap_setoid {A} : A ⇒ A.
 Proof.
-  apply (Build_setoid_map _ _ idmap); swesetoid.
+  apply (Build_setoid_map _ _ (idfun _)); swesetoid.
 Defined.
 
 Definition comp_setoid {A B} (C : setoid) : (B ⇒ C) ⇒ (A ⇒ B) ⇒ (A ⇒ C).
@@ -249,14 +254,15 @@ Local Open Scope path_scope.
 
 Definition discrete_setoid (X : Type) : setoid.
 Proof.
-  apply (Build_setoid_flat X (λ x y, x = y)); eauto using inverse, concat.
+  apply (Build_setoid_flat X (λ x y, x = y));
+    eauto using pathsinv0, pathscomp0.
 Defined.
 
-Definition nat_setoid := discrete_setoid ℕ.
+Definition nat_setoid := discrete_setoid nat.
 
 Definition indiscrete_setoid (X : Type) : setoid.
 Proof.
-  apply (Build_setoid_flat X (λ x y, ⊤)); intros; exact tt.
+  apply (Build_setoid_flat X (λ x y, unit)); intros; exact tt.
 Defined.
 
 (* Needed since indiscrete setoid equality types often get unfolded quickly,
@@ -264,20 +270,20 @@ Defined.
   basic setoid constructs. *)  
 Hint Immediate tt : swesetoid.
 
-Definition empty_setoid := indiscrete_setoid ⊥.
+Definition empty_setoid := indiscrete_setoid empty.
 
-Definition unit_setoid := indiscrete_setoid ⊤.
+Definition unit_setoid := indiscrete_setoid unit.
 
 Definition sum_setoid (A B : setoid) : setoid.
 Proof.
-  apply (Build_setoid_flat (A + B)
+  apply (Build_setoid_flat (A ⨿ B)
     (λ a b, match a with
               | inl α => match b with
                            | inl α' => α ≈ α'
-                           | inr _  => ⊥
+                           | inr _  => empty
                          end
               | inr β => match b with
-                           | inl _  => ⊥
+                           | inl _  => empty
                            | inr β' => β ≈ β'
                          end
             end)).
@@ -289,15 +295,15 @@ Defined.
 Notation "x ⊕ y" := (sum_setoid x y)
     (at level 50, left associativity) : setoid_scope.
 
-Definition inl_setoid {A B} : A ⇒ A ⊕ B.
+Definition ii1_setoid {A B} : A ⇒ A ⊕ B.
 Proof.
-  apply (Build_setoid_map _ (A ⊕ B) (λ a : A, inl B a)).
+  apply (Build_setoid_map _ (A ⊕ B) (λ a : A, inl a)).
   auto.
 Defined.
 
 Definition inr_setoid {A B} : B ⇒ A ⊕ B.
 Proof.
-  apply (Build_setoid_map _ (A ⊕ B) (λ b : B, inr A b)).
+  apply (Build_setoid_map _ (A ⊕ B) (λ b : B, inr b)).
   auto.
 Defined.
 
@@ -306,7 +312,7 @@ Definition sum_mediating {A B} (X : setoid) (f : A ⇒ X) (g : B ⇒ X)
 Proof.
   apply (Build_setoid_map (A ⊕ B) _
     (λ x, match x with
-            | inl a => f a
+            | ii1 a => f a
             | inr b => g b
           end)).
 intros [a | b] [a' | b'] p; try contradiction p;
@@ -314,16 +320,16 @@ intros [a | b] [a' | b'] p; try contradiction p;
 Defined.
 
 Lemma sum_universality {A B} (X : setoid) (f : A ⇒ X) (g : B ⇒ X)
-  : f ≈ sum_mediating X f g ∘ inl_setoid
+  : f ≈ sum_mediating X f g ∘ ii1_setoid
   ∧ g ≈ sum_mediating X f g ∘ inr_setoid
-  ∧ ∀h, f ≈ h ∘ inl_setoid → g ≈ h ∘ inr_setoid → sum_mediating X f g ≈ h.
+  ∧ ∏h, f ≈ h ∘ ii1_setoid → g ≈ h ∘ inr_setoid → sum_mediating X f g ≈ h.
 Proof.
   repeat split; try (intro; apply refl_setoid).
   intros h feq geq [a | b]; simpl. apply (feq a). apply (geq b).
 Qed.
 
 Definition sum_map {A B C D} (f : A ⇒ C) (g : B ⇒ D) : A ⊕ B ⇒ C ⊕ D
-  := sum_mediating (C ⊕ D) (inl_setoid ∘ f) (inr_setoid ∘ g).
+  := sum_mediating (C ⊕ D) (ii1_setoid ∘ f) (inr_setoid ∘ g).
 
 Definition prod_setoid (A B : setoid) : setoid.
 Proof.
@@ -359,7 +365,7 @@ Defined.
 Lemma prod_universality {A B} (X : setoid) (f : X ⇒ A) (g : X ⇒ B)
   : f ≈ fst_setoid ∘ (prod_mediating X f g)
   ∧ g ≈ snd_setoid ∘ (prod_mediating X f g)
-  ∧ ∀h, f ≈ fst_setoid ∘ h → g ≈ snd_setoid ∘ h → prod_mediating X f g ≈ h.
+  ∧ ∏h, f ≈ fst_setoid ∘ h → g ≈ snd_setoid ∘ h → prod_mediating X f g ≈ h.
 Proof.
   split. intro; apply refl_setoid.
   split. intro; apply refl_setoid.
@@ -376,15 +382,15 @@ Definition prod_map {A B C D} (f : A ⇒ C) (g : B ⇒ D) : A ⊗ B ⇒ C ⊗ D
 
 (* First the transitive closure of a reflexive relation on a setoid. *)
 Definition Transitive_Closure {A : setoid} (R : A → A → Type) (x y : A)
-  := ∃f : ℕ → A, ∃n : ℕ, (x ≈ f 0 ∧ f n ≈ y ∧ ∀m:ℕ, R (f m) (f (S m))).
+  := ∑f : nat → A, ∑n : nat, (x ≈ f 0 ∧ f n ≈ y ∧ ∏m:nat, R (f m) (f (S m))).
 
 Lemma trans_transclosure {A : setoid} (R : A → A → Type)
-  (Rextl : ∀x y z : A, x ≈ y → R x z → R y z)
-  : ∀x y z : A, Transitive_Closure R x y → Transitive_Closure R y z
+  (Rextl : ∏x y z : A, x ≈ y → R x z → R y z)
+  : ∏x y z : A, Transitive_Closure R x y → Transitive_Closure R y z
   → Transitive_Closure R x z.
 Proof.
   intros x y z [f [m [ef0 [em fp]]]] [g [n [eg0 [en gp]]]].
-  exists (λ a : ℕ, if (le a m) then (f a) else (g (a - m))).
+  exists (λ a : nat, if (le a m) then (f a) else (g (a - m))).
   exists (n + m).
   split. simpl; assumption.
   split.
@@ -412,12 +418,12 @@ Proof.
 Qed.
 
 Lemma transclosure_preserves_sym {A : setoid} (R : A → A → Type)
-  (Rsym : ∀x y : A, R x y → R y x)
-  (Rrefl : ∀x : A, R x x)
-  : ∀x y : A, Transitive_Closure R x y → Transitive_Closure R y x.
+  (Rsym : ∏x y : A, R x y → R y x)
+  (Rrefl : ∏x : A, R x x)
+  : ∏x y : A, Transitive_Closure R x y → Transitive_Closure R y x.
 Proof.
   intros x y [f [m [ef0 [em fp]]]].
-  exists (λ n : ℕ, f (m - n)).
+  exists (λ n : nat, f (m - n)).
   exists m.
   split.
     assert (eq : m = m - 0).
@@ -440,8 +446,8 @@ Proof.
 Qed.
 
 Lemma transclosure_preserves_refl {A : setoid} (R : A → A → Type)
-  (Rrefl : ∀x : A, R x x)
-  : ∀x : A, Transitive_Closure R x x.
+  (Rrefl : ∏x : A, R x x)
+  : ∏x : A, Transitive_Closure R x x.
 Proof.
   intro x.
   exists (λ n, x).
@@ -455,8 +461,8 @@ Proof.
     (Build_setoid_flat B
       (Transitive_Closure
         (λ x y, x ≈ y
-                ∨ (∃a : A, f a ≈ x ∧ g a ≈ y)
-                ∨ (∃a : A, f a ≈ y ∧ g a ≈ x)))).
+                ∨ (∑a : A, f a ≈ x ∧ g a ≈ y)
+                ∨ (∑a : A, f a ≈ y ∧ g a ≈ x)))).
   apply transclosure_preserves_refl. swesetoid.
   apply transclosure_preserves_sym.
     intros x y [e | [[a [e1 e2]] | [a [e1 e2]]]]; swesetoid. swesetoid.
@@ -489,7 +495,7 @@ Definition coequalizer_mediating {A B} (f g : A ⇒ B)
 Proof.
   refine (Build_setoid_map (coequalizer_setoid f g) _ (λ x, h x) _).
   intros x y [φ [n [e0 [en p]]]].
-  assert (claim : ∀m : ℕ, h x ≈ h (φ m)).
+  assert (claim : ∏m : nat, h x ≈ h (φ m)).
     induction m as [ | m IHm].
       swesetoid.
     apply tra_setoid with (h (φ m)). apply IHm.
@@ -505,7 +511,7 @@ Defined.
 Lemma coequalizer_universal {A B} (f g : A ⇒ B) 
   {C} (h : B ⇒ C) (e_hf_hg : h ∘ f ≈ h ∘ g)
 : (coequalizer_mediating f g h e_hf_hg) ∘ (coequalizer_map f g) ≈ h
-  ∧ ∀ m : coequalizer_setoid f g ⇒ C,
+  ∧ ∏ m : coequalizer_setoid f g ⇒ C,
       m ∘ (coequalizer_map f g) ≈ h
       → m ≈ (coequalizer_mediating f g h e_hf_hg).
 Proof.
@@ -514,9 +520,3 @@ Proof.
   intros m e_mc_h c; simpl in *.
     swesetoid.
 Qed.
-
-(* Fin *)
-(* Local Variables: *)
-(* coq-prog-name: "hoqtop" *)
-(* End: *)
-

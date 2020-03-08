@@ -1,0 +1,10 @@
+
+\exists -> \sum
+\forall -> \product
+\bbN -> nat
+ap -> maponpaths
+1 -> 1%path
+p^ -> !ps
++ -> \amalg
+inl: remove first argument (and -> ii1 if necessary)
+inr: as inl, ii2
