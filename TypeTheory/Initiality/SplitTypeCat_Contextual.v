@@ -2,30 +2,16 @@
 (** This file provides a definition (and basic development) of contextual categories as split type-cats/CwA’s in which every object is uniquely expressible as an iterated extension of a chosen terminal object. *)
 
 Require Import UniMath.MoreFoundations.All.
-Require Import UniMath.CategoryTheory.All.
+Require UniMath.CategoryTheory.All.
+Require Import UniMath.CategoryTheory.Core.Categories.
+Require Import UniMath.CategoryTheory.Core.Isos.
+Require Import UniMath.CategoryTheory.Core.Univalence.
+Require Import UniMath.CategoryTheory.limits.terminal.
 Require Import TypeTheory.Auxiliary.Auxiliary.
 Require Import TypeTheory.Auxiliary.Partial.
 Require Import TypeTheory.ALV1.TypeCat.
 
 Require Import TypeTheory.Initiality.SplitTypeCat_General.
-
-(* These two lemmas should be upstreamed to UniMath/CategoryTheory/limits/terminal.v and initial.v *)
-Section upstream.
-
-  Lemma isaprop_isTerminal {C : precategory} (x : C) : isaprop (isTerminal C x).
-  Proof.
-    repeat (apply impred; intro).
-    apply isapropiscontr.
-  Qed.
-
-  Lemma isaprop_isInitial {C : precategory} (x : C) : isaprop (isInitial C x).
-  Proof.
-    repeat (apply impred; intro).
-    apply isapropiscontr.
-  Qed.
-    
-End upstream.
-
 
 Section Extensions.
 (** Context extensions in type-categories, i.e. suitable sequences of types *)
@@ -250,7 +236,7 @@ Note that such a base object is necessarily unique: see [isaprop_is_contextual].
     apply invproofirrelevance; intros H H'.
     apply subtypePath.
     { intros Γ0; apply isapropdirprod.
-      - apply isaprop_isTerminal.
+      - refine (isaprop_isTerminal Γ0).
       - apply propproperty. }
     destruct H as [Γ0 [K H]], H' as [Γ0' [K' H']]; cbn; clear K K'.
     destruct (H Γ0') as [[AA e] _], (H' Γ0) as [[AA' e'] _].
