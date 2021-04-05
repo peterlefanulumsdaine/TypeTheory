@@ -11,7 +11,6 @@ Possibly some should be upstreamed to “UniMath” eventually.
 
 *)
 
-
 Require Import UniMath.Foundations.PartD.
 Require Import UniMath.Foundations.Sets.
 Require Import UniMath.Combinatorics.StandardFiniteSets.
@@ -49,8 +48,6 @@ Tactic Notation "sym" := apply pathsinv0.
 Tactic Notation "assoc" := apply @pathsinv0, path_assoc.
 
 (** * Some argument settings *)
-
-Arguments functor_on_inv_from_iso {_ _} _  {_ _} f.
 
 (** Make [simpl], [cbn], etc. unfold [ (f ∘ g) x ] but not [ f ∘ g ]: *)
 Arguments funcomp {_ _ _} _ _ _/.
