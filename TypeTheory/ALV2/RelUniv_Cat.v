@@ -26,6 +26,7 @@ TODO: document/update Comm_Squares and Functor_Squares sections.
 *)
 
 Require Import UniMath.Foundations.Sets.
+Require Import UniMath.MoreFoundations.PartA.
 Require Import TypeTheory.Auxiliary.CategoryTheoryImports.
 
 Require Import UniMath.CategoryTheory.DisplayedCats.Codomain.

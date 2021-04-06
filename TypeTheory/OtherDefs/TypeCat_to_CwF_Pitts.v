@@ -9,6 +9,7 @@
 
 *)
 
+Require Import UniMath.MoreFoundations.PartA.
 Require Import UniMath.CategoryTheory.limits.pullbacks.
 Require Import TypeTheory.Auxiliary.CategoryTheoryImports.
 Require Import TypeTheory.Auxiliary.Auxiliary.
