@@ -40,7 +40,6 @@ Delimit Scope mor_scope with mor.
 Bind Scope mor_scope with precategory_morphisms.
 Open Scope mor_scope.
 
-
 (** * Some tactics *)
 
 Tactic Notation "etrans" := eapply pathscomp0.
@@ -58,62 +57,9 @@ Arguments idfun _ _ / .
 
 (** * Path-algebra: general lemmas about transport, equivalences, etc. *)
 
-(* TODO: delete this and replace with [pr1_issurjective], now that https://github.com/UniMath/UniMath/issues/677 is resolved*)
-Lemma pr1_issurjective' {X : UU} {P : X -> UU} :
-  (∏ x : X, ∥ P x ∥) -> issurjective (pr1 : (∑ x, P x) -> X).
-Proof.
-  intros ne x. simple refine (hinhuniv _ (ne x)).
-  intros p. apply hinhpr.
-  exact ((x,,p),,idpath _).
-Defined.
+Arguments pr1_transportf _ _ _ _ _ _ _ : clear implicits.
 
-Lemma fibers_inhab_if_pr1_issurjective {X : UU} {P : X -> UU} :
-  (∏ x : X, ∥ P x ∥) <- issurjective (pr1 : (∑ x, P x) -> X).
-Proof.
-  intros ne x. simple refine (hinhuniv _ (ne x)).
-  intros p. apply hinhpr.
-  cbn in p.
-  destruct p as [[a b] c].
-  cbn in *.
-  induction c. 
-  assumption.
-Defined.
-
-(* TODO : upstream *)
-Lemma isaprop_fiber_if_isinclpr1 
-  : ∏ (X : UU) (isasetX : isaset X) (P : X → UU), (∏ x : X, isaprop (P x)) <- isincl (pr1 : (∑ x, P x) -> X).
-Proof.
-  intros X isasetX P H x.
-  apply invproofirrelevance.
-  intros p p'.
-  assert (X0 :  x,,p = x,,p').
-  { specialize (H x).
-    assert (H1 :  (x,,p),, idpath _ = ((x,,p'),,idpath _ : hfiber pr1 x)).
-    { apply H. }
-    apply (base_paths _ _ H1).
-  } 
-  set (XR := fiber_paths X0). cbn in XR.
-  etrans. 2: { apply XR. }
-  apply pathsinv0. 
-  etrans. apply maponpaths_2. apply (isasetX _ _ _ (idpath x)).
-  apply idpath_transportf.
-Defined.
-
-
-Lemma weqhomot {A B : UU} (f : A -> B) (w : A ≃ B) (H : w ~ f) : isweq f.
-Proof.
-  apply isweqhomot with w. apply H. apply weqproperty.
-Defined.
-
-
-Lemma pr1_transportf (A : UU) (B : A -> UU) (P : ∏ a, B a -> UU)
-   (a a' : A) (e : a = a') (xs : ∑ b : B a, P _ b):
-   pr1 (transportf (fun x => ∑ b : B x, P _ b) e xs) = 
-     transportf (fun x => B x) e (pr1 xs).
-Proof.
-  destruct e; apply idpath.
-Defined.
-
+(* TODO: [Foundations.PartA.transportf_const] is nearly this, modulo [toforallpaths]/[eqtohomot].  It seems like this version is what’s almost always needed?  TODO: try changing it there, then remove here. *)
 Lemma transportf_const (A B : UU) (a a' : A) (e : a = a') (b : B) :
    transportf (fun _ => B) e b = b.
 Proof.
@@ -121,6 +67,7 @@ Proof.
   apply idpath.
 Defined.
 
+(* TODO: this is redundant with [transportf_sec_constant] in [MoreFoundations.PartA]. Upstream; consider naming there? *)
 (* TODO: systematise these variants of [transportf_forall]:
 - probably make [transportf_forall] the most general form, where [B] depends on [A] and [C] depends on both
 - and then give the partly-reduced variants some systematic names, if possible. *)
@@ -132,6 +79,7 @@ Proof.
   destruct e; apply idpath.
 Defined.
 
+(* TODO: upstream *)
 Definition transportf_forall_var :
   ∏ (A : UU) (B : A -> UU) (C : UU)
     (a1 a2 : A) (e : a1 = a2)
@@ -144,6 +92,7 @@ Proof.
   apply idpath.
 Defined.
 
+(* TODO: upstream *)
 Definition transportf_forall_var2 :
   ∏ (A : UU) (B C : A -> UU) 
     (a1 a2 : A) (e : a1 = a2)
@@ -156,6 +105,7 @@ Proof.
   apply idpath.
 Defined.
 
+(* TODO: upstream *)
 Lemma maponpaths_apply {A B} {f0 f1 : A -> B} (e : f0 = f1) (x : A)
   : maponpaths (fun f => f x) e
   = toforallpaths _ _ _ e x.
@@ -163,6 +113,7 @@ Proof.
   destruct e; apply idpath.
 Defined.
 
+(* TODO: upstream? or too specialised? *)
 Lemma maponpaths_eq_idpath
   : ∏ (T1 T2 : UU) (f : T1 -> T2) (t1 : T1) (e : t1 = t1)
       (H : e = idpath _ ), maponpaths f e = idpath _ .
@@ -171,6 +122,7 @@ Proof.
   exact (maponpaths (maponpaths f) H).
 Defined.
 
+(* TODO: upstream? or too specialised? *)
 Lemma transportf_comp_lemma (X : UU) (B : X -> UU) {A A' A'': X} (e : A = A'') (e' : A' = A'')
   (x : B A) (x' : B A')
   : transportf _ (e @ !e') x = x'
@@ -191,6 +143,7 @@ Proof.
     apply pathscomp0rid.
 Defined.
 
+(* TODO: unnecessarily specialised; try to refactor away *)
 Lemma transportf_comp_lemma_hset (X : UU) (B : X -> UU) (A : X) (e : A = A)
   {x x' : B A} (hs : isaset X)
   : x = x'
@@ -202,22 +155,6 @@ Proof.
     apply hs.
   - exact ex.
 Qed.
-
-Lemma transportf_pair {A B} (P : A × B -> UU) {a a' : A} {b b' : B}
-      (eA : a = a') (eB : b = b') (p : P (a,,b)) 
-      : transportf P (pathsdirprod eA eB) p =
-        transportf (fun bb => P(a',,bb) ) eB (transportf (fun aa => P(aa,,b)) eA p).
-Proof.
-  induction eA. induction eB. apply idpath.
-Defined.
-
-
-(* TODO: redundant: replace with general-purpose [maponpaths_2]. *)
-Lemma transportf_ext (X : UU) (B : X -> UU) (A A' : X) (e e' : A = A') p :
-  e = e' -> transportf _ e p = transportf B e' p.
-Proof.
-  intro H; induction H; apply idpath.
-Defined.
 
 (** ** Lemmas on equivalences *)
 
