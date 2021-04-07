@@ -122,39 +122,14 @@ Proof.
   exact (maponpaths (maponpaths f) H).
 Defined.
 
-(* TODO: upstream? or too specialised? *)
-Lemma transportf_comp_lemma (X : UU) (B : X -> UU) {A A' A'': X} (e : A = A'') (e' : A' = A'')
-  (x : B A) (x' : B A')
-  : transportf _ (e @ !e') x = x'
-  -> transportf _ e x = transportf _ e' x'.
+(* TODO: upstream to with [transportf_set] *)
+Lemma transportf_isaset_gen {A : UU} (B : A → UU)
+      {a a' : A} (e e' : a = a') (b : B a)
+      (A_set : isaset A)
+  : transportf B e b = transportf B e' b.
 Proof.
-  intro H.
-  eapply pathscomp0.
-  2: { apply maponpaths. exact H. }
-  eapply pathscomp0.
-  2: { symmetry. apply transport_f_f. }
-  apply (maponpaths (fun p => transportf _ p x)).
-  apply pathsinv0.
-  eapply pathscomp0.
-  - apply @pathsinv0, path_assoc. 
-  - eapply pathscomp0. 
-    apply maponpaths.
-    apply pathsinv0l.
-    apply pathscomp0rid.
+  apply maponpaths_2, A_set.
 Defined.
-
-(* TODO: unnecessarily specialised; try to refactor away *)
-Lemma transportf_comp_lemma_hset (X : UU) (B : X -> UU) (A : X) (e : A = A)
-  {x x' : B A} (hs : isaset X)
-  : x = x'
-  -> transportf _ e x = x'.
-Proof.
-  intros ex.
-  apply @pathscomp0 with (transportf _ (idpath _) x).
-  - apply (maponpaths (fun p => transportf _ p x)).
-    apply hs.
-  - exact ex.
-Qed.
 
 (** ** Lemmas on equivalences *)
 

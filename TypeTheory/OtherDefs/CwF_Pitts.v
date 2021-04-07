@@ -14,6 +14,7 @@
 *)
 
 Require Import UniMath.Foundations.Sets.
+Require Import UniMath.MoreFoundations.PartA.
 Require Import UniMath.CategoryTheory.limits.pullbacks.
 Require Import UniMath.CategoryTheory.Core.Categories.
 Require Import UniMath.CategoryTheory.Core.Isos.
@@ -487,7 +488,10 @@ Lemma term_typeeq_transport_lemma {Γ} {A A' A'': C ⟨ Γ ⟩} (e : A = A'') (e
   : transportf _ (e @ !e') x = x'
   -> transportf _ e x = transportf _ e' x'.
 Proof.
-  apply transportf_comp_lemma.
+  intros e_x.
+  etrans. 2: { apply maponpaths, e_x. }
+  etrans. 2: { apply pathsinv0, transport_f_f. }
+  apply transportf_isaset_gen, cwf_types_isaset.
 Qed.
 
 Lemma term_typeeq_transport_lemma_2 {Γ} {A : C ⟨ Γ ⟩} (e : A = A)
@@ -495,8 +499,8 @@ Lemma term_typeeq_transport_lemma_2 {Γ} {A : C ⟨ Γ ⟩} (e : A = A)
   : x = x'
   -> transportf _ e x = x'.
 Proof.
-  apply transportf_comp_lemma_hset.
-  apply cwf_types_isaset.
+  intros e_x; refine (_ @ e_x). 
+  apply transportf_set, cwf_types_isaset.
 Qed.
 
 Lemma reindx_term_comp' {Γ Γ' Γ''} (γ : Γ' --> Γ) (γ' : Γ'' --> Γ') {A} (a : C ⟨ Γ ⊢ A ⟩)
