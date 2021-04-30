@@ -82,4 +82,34 @@ Section Identity_types.
       = tm_transportb _ (refl Γ' _ _) 
   := pr2 refl _ _ f A a.
 
+  Definition id_based_fam (Id : id_form_struct) {Γ:C} (A : C Γ) (a : tm A)
+    : C (Γ ◂ A)
+  := Id _ _ (reind_tm _ a) (var_typecat A).
+  (* TODO: add defs to make this easier to read/write, e.g. for de Bruijn index variables?? *)
+
+  Definition id_refl_map {Id} (refl : id_intro_struct Id)
+      {Γ} {A : C Γ} (a : tm A)
+    : Γ --> Γ ◂ A ◂ id_based_fam Id A a.
+  Proof.
+    refine (a ;; _). 
+    apply section_of_term. unfold id_based_fam.
+    refine (tm_transportb _ (refl _ _ (reind_tm (dpr_typecat _) a))).
+  Admitted.
+
+  (* We use the based definition of the Id-elim rule *)
+  Definition id_elim_struct Id (refl : id_intro_struct Id) : UU
+    := forall {Γ} (A : C Γ) (a : tm A)
+              (P : C (_ ◂ id_based_fam Id A a))
+              (d : @tm _ Γ (P ⦃ id_refl_map refl a ⦄)), 
+      tm P.
+  (* TODO: add last term arguments; add naturality *)
+
+  Definition id_elim_struct_pr1 {Id} {refl : id_intro_struct Id}
+       (J : id_elim_struct Id refl)
+       {Γ} (A : C Γ) (a : tm A)
+       (P : C (_ ◂ id_based_fam Id A a))
+       (d : @tm _ Γ (P ⦃ id_refl_map refl a ⦄)) 
+    : tm P
+  := J Γ A a P d.
+    
 End Identity_types.
