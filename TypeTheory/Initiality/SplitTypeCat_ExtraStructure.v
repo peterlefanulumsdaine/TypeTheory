@@ -87,29 +87,75 @@ Section Identity_types.
   := Id _ _ (reind_tm _ a) (var_typecat A).
   (* TODO: add defs to make this easier to read/write, e.g. for de Bruijn index variables?? *)
 
+  (* TODO: upstream? and see if can unify with anything? *)
+  Definition cxt_map_ext
+      {Γ} (A : C Γ)
+      {Γ'} (f : Γ' --> Γ)
+      (a : tm (A⦃f⦄))
+    : Γ' --> Γ ◂ A.
+  Proof.
+    refine (a ;; _). apply q_typecat.
+  Defined.
+
+  (* TODO: seek elsewhere in library!
+   TODO: naming!  order of args isn’t traditional “bind” *)
+  (** helpful for equality reasoning with terms,
+   to avoid repeatedly using [etrans. { apply tm_transportf_compose. }] *)
+  Definition tm_transportf_bind {Γ}
+      {A A' A'': C Γ} {e : A = A'} {e' : A' = A''}
+      {t} {t'} {t''}
+      (ee : tm_transportf e t = t') (ee' : tm_transportf e' t' = t'')
+    : tm_transportf (e @ e') t = t''.
+  Proof.
+    etrans. apply tm_transportf_compose.
+    etrans. { apply maponpaths; eassumption. }
+    assumption.
+  Qed.
+
   Definition id_refl_map {Id} (refl : id_intro_struct Id)
       {Γ} {A : C Γ} (a : tm A)
     : Γ --> Γ ◂ A ◂ id_based_fam Id A a.
   Proof.
-    refine (a ;; _). 
-    apply section_of_term. unfold id_based_fam.
-    refine (tm_transportb _ (refl _ _ (reind_tm (dpr_typecat _) a))).
-  Admitted.
+    apply (cxt_map_ext _ a). unfold id_based_fam.
+    refine (tm_transportb _ (refl _ _ _)).
+    etrans. { apply id_form_struct_natural. }
+    apply maponpaths.
+    abstract (
+      refine (reind_tm_var_typecat_gen _ _ @ _);
+      refine (tm_transportf_bind _ (reind_compose_tm' _ _ _));
+      refine (tm_transportf_bind _
+                         (!maponpaths_2_reind_tm (section_property a) _));
+      refine (! reind_id_tm _)).
+  Defined.
+  (* TODO: move [tm_transport] to RHS in [maponpaths_2_reind_tm], [reind_id_tm] to fit general convention? *)
 
   (* We use the based definition of the Id-elim rule *)
-  Definition id_elim_struct Id (refl : id_intro_struct Id) : UU
-    := forall {Γ} (A : C Γ) (a : tm A)
-              (P : C (_ ◂ id_based_fam Id A a))
-              (d : @tm _ Γ (P ⦃ id_refl_map refl a ⦄)), 
-      tm P.
-  (* TODO: add last term arguments; add naturality *)
+  Definition id_elim_struct Id (refl : id_intro_struct Id) : UU.
+  Proof.
+    refine (∑ (J : forall {Γ} (A : C Γ) (a : tm A)
+                     (P : C (_ ◂ id_based_fam Id A a))
+                     (d : @tm _ Γ (P ⦃ id_refl_map refl a ⦄)), 
+             tm P),
+      forall {Γ Γ'} (f : Γ' --> Γ)
+             (A : C Γ) (a : tm A)
+             (P : C (_ ◂ id_based_fam Id A a))
+             (d : @tm _ Γ (P ⦃ id_refl_map refl a ⦄)),
+        _).
+    simple refine (J Γ' (A⦃f⦄) (reind_tm f a) (P⦃_⦄) _
+        = _).
+    - refine (_ ;;  q_typecat _ (q_typecat _ f)).
+      apply comp_ext_compare.
+      etrans. 2: { apply pathsinv0, id_form_struct_natural. }
+      unfold id_based_fam.
+  (* TODO: finish naturality; add last term arguments. *)
+  Admitted.
 
   Definition id_elim_struct_pr1 {Id} {refl : id_intro_struct Id}
        (J : id_elim_struct Id refl)
        {Γ} (A : C Γ) (a : tm A)
        (P : C (_ ◂ id_based_fam Id A a))
        (d : @tm _ Γ (P ⦃ id_refl_map refl a ⦄)) 
-    : tm P
-  := J Γ A a P d.
+    : tm P.
+  Admitted.
     
 End Identity_types.
