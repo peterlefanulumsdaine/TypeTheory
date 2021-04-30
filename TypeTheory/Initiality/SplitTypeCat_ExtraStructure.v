@@ -46,3 +46,40 @@ Section Pi_eta_structure.
   Defined.
 
 End Pi_eta_structure.
+
+Section Identity_types.
+  (** The structure to model identity types in a split type-category. *)
+
+  Context (C : split_typecat).
+
+  Definition id_form_struct : UU
+  := ∑ (Id : forall (Γ : C) (A : C Γ) (a b : tm A), C Γ),
+       (forall (Γ Γ' : C) (f : Γ' --> Γ) (A : C Γ) (a b : tm A),
+         (Id Γ A a b) ⦃ f ⦄ = Id Γ' (A⦃f⦄) (reind_tm f a) (reind_tm f b)).
+
+  Definition id_form_struct_pr1 (Id : id_form_struct) := pr1 Id.
+  Coercion id_form_struct_pr1 : id_form_struct >-> Funclass.
+
+  Definition id_form_struct_natural {Id : id_form_struct}
+      {Γ Γ'} (f : Γ' --> Γ) {A} a b
+    : (Id _ _ a b) ⦃ f ⦄ = Id Γ' _ _ _
+  := pr2 Id _ _ f A a b.
+  (* TODO: try to get implicit args working better for these and other such structure? *)
+  
+  Definition id_intro_struct (Id : id_form_struct) : UU
+  := ∑ (refl : forall (Γ : C) (A : C Γ) (a : tm A), tm (Id _ _ a a)),
+       (forall (Γ Γ' : C) (f : Γ' --> Γ) A a,
+         reind_tm f (refl Γ A a)
+         = tm_transportb (id_form_struct_natural _ _ _)
+             (refl _ _ (reind_tm f a))).
+
+  Definition id_intro_struct_pr1 {Id} (refl : id_intro_struct Id) := pr1 refl.
+  Coercion id_intro_struct_pr1 : id_intro_struct >-> Funclass.
+
+  Definition id_intro_struct_natural {Id} (refl : id_intro_struct Id)
+      {Γ Γ'} (f : Γ' --> Γ) A a
+    : reind_tm f (refl Γ A a)
+      = tm_transportb _ (refl Γ' _ _) 
+  := pr2 refl _ _ f A a.
+
+End Identity_types.
