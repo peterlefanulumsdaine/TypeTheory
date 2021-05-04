@@ -93,7 +93,47 @@ Section Identity_types.
       = tm_transportb _ (refl Γ' _ _) 
   := pr2 refl _ _ f A a.
 
+  Definition id_intro_q {Id} (refl : id_intro_struct Id)
+      {Γ Γ'} (f : Γ' --> Γ) A a
+    : f ;; refl Γ A a
+      = refl Γ' _ (reind_tm f a)
+        ;; comp_ext_compare (!id_form_struct_natural _ _ _)
+        ;; q_typecat _ f.
+  Proof.
+    etrans. { apply pathsinv0, reind_tm_q. }
+    apply maponpaths_2. 
+    exact (maponpaths _ (id_intro_struct_natural _ _ _ _)).
+  Qed.
+
   (** Auxiliary definitions towards the id-elim rule *) 
+
+
+  (* TODO: seek elsewhere in library!
+   TODO: naming!  order of args isn’t traditional “bind” *)
+  (** helpful for equality reasoning with terms,
+   to avoid repeatedly using [etrans. { apply tm_transportf_compose. }] *)
+  Definition tm_transportf_bind_l {Γ}
+      {A A' A'': C Γ} {e : A = A'} {e' : A' = A''}
+      {t} {t'} {t''}
+      (ee : tm_transportf e t = t') (ee' : tm_transportf e' t' = t'')
+    : tm_transportf (e @ e') t = t''.
+  Proof.
+    etrans. apply tm_transportf_compose.
+    etrans. { apply maponpaths; eassumption. }
+    assumption.
+  Qed.
+
+  Definition tm_transportf_bind {Γ}
+      {A A' A'': C Γ} {e : A' = A} {e' : A'' = A'}
+      {t} {t'} {t''}
+      (ee : t = tm_transportf e t') (ee' : t' = tm_transportf e' t'')
+    : t = tm_transportf (e' @ e) t''.
+  Proof.
+    etrans. 2: { apply pathsinv0, tm_transportf_compose. }
+    etrans. { eassumption. }
+    apply maponpaths; assumption.
+  Qed.
+
   Definition id_based_fam (Id : id_form_struct) {Γ:C} (A : C Γ) (a : tm A)
     : C (Γ ◂ A)
   := Id _ _ (reind_tm _ a) (var_typecat A).
@@ -126,7 +166,7 @@ Section Identity_types.
 
   (* TODO: upstream? and see if can unify with anything? *)
   Definition cxt_map_ext
-      {Γ} (A : C Γ)
+      {Γ} {A : C Γ}
       {Γ'} (f : Γ' --> Γ)
       (a : tm (A⦃f⦄))
     : Γ' --> Γ ◂ A.
@@ -134,38 +174,88 @@ Section Identity_types.
     refine (a ;; _). apply q_typecat.
   Defined.
 
-  (* TODO: seek elsewhere in library!
-   TODO: naming!  order of args isn’t traditional “bind” *)
-  (** helpful for equality reasoning with terms,
-   to avoid repeatedly using [etrans. { apply tm_transportf_compose. }] *)
-  Definition tm_transportf_bind {Γ}
-      {A A' A'': C Γ} {e : A = A'} {e' : A' = A''}
-      {t} {t'} {t''}
-      (ee : tm_transportf e t = t') (ee' : tm_transportf e' t' = t'')
-    : tm_transportf (e @ e') t = t''.
+  (* TODO: upstream! *)
+  Definition tm_transportf_unfold
+      {Γ} {A A' : C Γ} (e : A = A') (a : tm A)
+    : (tm_transportf e a : _ --> _)
+    = a ;; comp_ext_compare e.
   Proof.
-    etrans. apply tm_transportf_compose.
-    etrans. { apply maponpaths; eassumption. }
-    assumption.
+    apply idpath.
   Qed.
+
+  (* TODO: upstream! *)
+  Definition tm_transportb_unfold
+      {Γ} {A A' : C Γ} (e : A = A') (a : tm A')
+    : (tm_transportb e a : _ --> _)
+    = a ;; comp_ext_compare (!e).
+  Proof.
+    apply idpath.
+  Qed.
+
+  (* TODO: upstream? and see if can unify with anything? *)
+  Definition cxt_map_ext_postcompose_gen
+      {Γ} {A : C Γ}
+      {Γ'} (f : Γ' --> Γ)
+      (a : tm (A⦃f⦄))
+      {Γ''} (g : Γ'' --> Γ')
+      (e : A ⦃g · f⦄ = (A ⦃f⦄) ⦃g⦄)
+    : g ;; (cxt_map_ext f a)
+    = cxt_map_ext (g ;; f) (tm_transportb e (reind_tm g a)).
+  Proof.
+    unfold cxt_map_ext.
+    rewrite q_q_typecat.
+    repeat rewrite assoc. apply maponpaths_2.
+    rewrite <- reind_tm_q. apply maponpaths_2.
+    rewrite tm_transportb_unfold.
+    rewrite <- assoc.
+    etrans. 2: { apply maponpaths, comp_ext_compare_comp. }
+    rewrite comp_ext_compare_id_general.
+    apply pathsinv0, id_right.
+  Qed.
+  (* TODO: remove duplicate access function [reind_comp_term_typecat]?
+   TODO: fix naming conventions on [q_q_typecat], [q_q_typecat']
+     (lemma name should describe LHS, and [tm_transportf] munging should go on RHS) *)
+
+  (* TODO: upstream? and see if can unify with anything? *)
+  Definition cxt_map_ext_postcompose
+      {Γ} {A : C Γ}
+      {Γ'} (f : Γ' --> Γ)
+      (a : tm (A⦃f⦄))
+      {Γ''} (g : Γ'' --> Γ')
+    : g ;; (cxt_map_ext f a)
+    = cxt_map_ext (g ;; f) 
+        (tm_transportb (reind_comp_typecat _ _ _ _ _ _)
+                       (reind_tm g a)).
+  Proof.
+    apply cxt_map_ext_postcompose_gen.
+  Qed.
+
 
   Definition id_refl_map {Id} (refl : id_intro_struct Id)
       {Γ} {A : C Γ} (a : tm A)
     : Γ --> Γ ◂ A ◂ id_based_fam Id A a.
   Proof.
-    apply (cxt_map_ext _ a). unfold id_based_fam.
-    refine (tm_transportb _ (refl _ _ _)).
-    etrans. { apply id_form_struct_natural. }
-    apply maponpaths.
-    abstract (
-      refine (reind_tm_var_typecat_gen _ _ @ _);
-      refine (tm_transportf_bind _ (reind_compose_tm' _ _ _));
-      refine (tm_transportf_bind _
-                         (!maponpaths_2_reind_tm (section_property a) _));
-      refine (! reind_id_tm _)).
+    apply (cxt_map_ext a). unfold id_based_fam.
+    refine (tm_transportb _ (refl _ _ a)).
+    abstract 
+    ( refine (id_form_struct_natural _ _ _ @ _);
+      use maponpaths_id_form;
+      [ refine (!reind_comp_typecat _ _ _ _ _ _ @ _);
+        refine (maponpaths _ (section_property _) @ _);
+        apply reind_id_type_typecat
+      | refine (_ @ tm_transportf_irrelevant _ _ _);
+        refine (tm_transportf_bind (! reind_compose_tm' _ _ _) _);
+        refine (maponpaths_2_reind_tm (section_property _) _ @ _);
+        refine (_ @ ! tm_transportf_compose _ _ _);
+        apply maponpaths, reind_id_tm
+      | refine (reind_tm_var_typecat _ @ _); apply tm_transportf_irrelevant]
+    ).
   Defined.
+
   (* TODO: move [tm_transport] to RHS in [maponpaths_2_reind_tm], [reind_id_tm] to fit general convention? 
    Also switch direvtions of [reind_compose_tm], etc? *)
+
+  Require Import TypeTheory.Initiality.SplitTypeCat_Maps.
 
   Definition id_refl_map_natural {Id} (refl : id_intro_struct Id)
       {Γ Γ'} (f : Γ' --> Γ) {A : C Γ} (a : tm A)
@@ -174,7 +264,47 @@ Section Identity_types.
         · q_typecat (id_based_fam Id A a) (q_typecat A f))
     = f · id_refl_map refl a.
   Proof.
-  Admitted.
+    unfold id_refl_map, cxt_map_ext.
+    repeat rewrite tm_transportb_unfold.
+    etrans. 2: { apply maponpaths, assoc. }
+    etrans. 2: { apply pathsinv0, assoc. }
+    etrans. 2: { eapply maponpaths_2, pathsinv0, id_intro_q. }
+    etrans. { apply pathsinv0, assoc. }
+    etrans. { apply pathsinv0, assoc. }
+    etrans. 2: { apply assoc. }
+    etrans. 2: { apply assoc. }
+    apply maponpaths.
+    etrans.
+    { apply maponpaths.
+      etrans. { apply assoc. }
+      etrans. { apply maponpaths_2, pathsinv0, q_typecat_typeeq. }
+      etrans. { apply assoc'. }
+      apply maponpaths, q_q_typecat'.
+    }
+    etrans.
+    2: { apply pathsinv0, maponpaths.
+      etrans. { apply assoc. }
+      etrans. { apply maponpaths_2, pathsinv0, q_typecat_typeeq. }
+      etrans. { apply assoc'. }
+      apply maponpaths, q_q_typecat'. 
+    }
+    etrans. { apply assoc. }
+    etrans. { apply maponpaths_2, pathsinv0, comp_ext_compare_comp. }
+    etrans. { apply assoc. }
+    etrans. { apply maponpaths_2, pathsinv0, comp_ext_compare_comp. }
+    etrans. 2: { apply assoc'. }
+    etrans. 2: { apply maponpaths_2, comp_ext_compare_comp. }
+    etrans. 2: { apply assoc'. }
+    etrans. 2: { apply maponpaths_2, comp_ext_compare_comp. }
+    etrans.
+    2: { apply maponpaths.
+         refine (comp_ext_compare_q_typecat _ _).
+         apply pathsinv0, reind_tm_q.
+    }
+    etrans. 2: { apply assoc'. }
+    etrans. 2: { apply maponpaths_2, comp_ext_compare_comp. }
+    apply maponpaths_2, comp_ext_compare_irrelevant.
+  Qed.
 
   (* We use the based definition of the Id-elim rule *)
   Definition id_elim_struct Id (refl : id_intro_struct Id) : UU.
