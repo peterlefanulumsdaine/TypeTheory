@@ -329,6 +329,9 @@ Section Identity_types.
       apply maponpaths.
       apply id_refl_map_natural.
   Defined.
+  (* TODO: this is currently the “universal” form of Id-elim, where the
+  output is a term in the same context as the family P.
+  For consistency with other rules, would be better to give the “hypothetical” form, with output in the ambient context [Γ], and two more term inputs and naturality in those. *)
 
   Definition id_elim_struct_pr1 {Id} {refl : id_intro_struct Id}
        (J : id_elim_struct Id refl)
@@ -337,5 +340,23 @@ Section Identity_types.
        (d : @tm _ Γ (P ⦃ id_refl_map refl a ⦄)) 
     : tm P
   := pr1 J Γ A a P d.
-    
+
+  Coercion id_elim_struct_pr1 : id_elim_struct >-> Funclass.
+
+  Definition id_elim_natural {Id} {refl : id_intro_struct Id}
+             (J : id_elim_struct Id refl)
+             {Γ Γ'} (f : Γ' --> Γ)
+             (A : C Γ) (a : tm A)
+             (P : C (_ ◂ id_based_fam Id A a))
+             (d : @tm _ Γ (P ⦃ id_refl_map refl a ⦄))
+    : reind_tm _ (J _ _ _ _ _) = J _ _ _ _ _
+  := pr2 J _ _ f _ _ _ d.
+
+  Definition id_comp_struct {Id} {refl} (J : id_elim_struct Id refl) : UU
+  := forall {Γ} (A : C Γ) (a : tm A)
+            (P : C (_ ◂ id_based_fam Id A a))
+            (d : @tm _ Γ (P ⦃ id_refl_map refl a ⦄)),
+    reind_tm (id_refl_map refl a) (J _ _ _ _ d) = d.
+
+  (* TODO: package up Id-types, as for Pi-types *)
 End Identity_types.
