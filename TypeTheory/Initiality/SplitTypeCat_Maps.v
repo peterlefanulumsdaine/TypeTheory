@@ -278,19 +278,6 @@ Section Derived_Actions.
     exact (typecat_mor_Ty F _ (type_of Aa),,fmap_tm F Aa).
   Defined.
 
-  (* TODO: upstream to [SplitTypeCat_General];
-     and consider harmonising with name of [comp_ext_compare_q_typecat],
-     e.g. by changing that to [q_typecat_mapeq]? *)
-  Lemma q_typecat_typeeq {C : typecat} {Γ:C}
-        {A A' : C Γ} (e : A = A')
-        {Γ' : C} (f : Γ' --> Γ)
-    : comp_ext_compare (maponpaths (fun X => X {{ f }}) e) ;; q_typecat A' f
-    = q_typecat A f ;; comp_ext_compare e.
-  Proof.
-    destruct e; cbn.
-    rewrite id_right; apply id_left.
-  Qed.
-
   Lemma var_with_type_fmap_type
       {C C'} (F : typecat_mor C C')
       {Γ} (A : C Γ)
@@ -320,7 +307,7 @@ Section Derived_Actions.
         { apply maponpaths.
           etrans. { apply pathsinv0, assoc. }
           etrans. { apply maponpaths, pathsinv0, assoc. }
-          etrans. { apply maponpaths, maponpaths, comp_ext_compare_q_typecat. }
+          etrans. { apply maponpaths, maponpaths, q_typecat_mapeq. }
           etrans. { apply maponpaths, pathsinv0, q_q_typecat'. }
           etrans. { apply assoc. }
           apply maponpaths_2, q_typecat_typeeq.

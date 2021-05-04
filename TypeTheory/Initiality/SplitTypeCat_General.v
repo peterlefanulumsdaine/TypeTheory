@@ -77,13 +77,25 @@ Section Comp_Ext_Compare.
     destruct e; apply id_left.
   Qed.
 
-  Definition comp_ext_compare_q_typecat {C : typecat}
+  (* TODO: consider changing direction? *)
+  Definition q_typecat_mapeq {C : typecat}
       {Γ Γ'} {f f' : Γ' --> Γ} (e : f = f') (A : C Γ)
     : comp_ext_compare (maponpaths _ e)
         ;; q_typecat A f'
       = q_typecat A f.
   Proof.
     destruct e; apply id_left.
+  Qed.
+
+  (* TODO: consider changing direction? *)
+  Lemma q_typecat_typeeq {C : typecat} {Γ:C}
+        {A A' : C Γ} (e : A = A')
+        {Γ' : C} (f : Γ' --> Γ)
+    : comp_ext_compare (maponpaths (fun X => X {{ f }}) e) ;; q_typecat A' f
+    = q_typecat A f ;; comp_ext_compare e.
+  Proof.
+    destruct e; cbn.
+    rewrite id_right; apply id_left.
   Qed.
 
 End Comp_Ext_Compare.
@@ -346,7 +358,7 @@ Section Terms.
       { do 3 apply maponpaths; rewrite assoc. apply pathsinv0, q_q_typecat. }
       etrans.
       { rewrite <- maponpathsinv0.
-        apply maponpaths, maponpaths, comp_ext_compare_q_typecat. }
+        apply maponpaths, maponpaths, q_typecat_mapeq. }
       etrans. { apply maponpaths, pathsinv0, q_q_typecat'. }
       rewrite assoc.
       etrans. { apply maponpaths_2, Pb_map_commutes_2. }

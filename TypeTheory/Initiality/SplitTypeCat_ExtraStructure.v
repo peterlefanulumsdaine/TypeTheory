@@ -8,8 +8,6 @@ Require Import TypeTheory.ALV1.TypeCat.
 Require Import TypeTheory.Initiality.SplitTypeCat_General.
 Require Import TypeTheory.Initiality.SplitTypeCat_Structure.
 
-Require Import TypeTheory.Initiality.SplitTypeCat_Maps. (* TODO: check what this was needed for, and upstream it *)
-
 Section Auxiliary.
 
   Context {C : split_typecat}.
@@ -302,7 +300,7 @@ Section Identity_types.
     etrans. 2: { apply maponpaths_2, comp_ext_compare_comp. }
     etrans.
     2: { apply maponpaths.
-         refine (comp_ext_compare_q_typecat _ _).
+         refine (q_typecat_mapeq _ _).
          apply pathsinv0, reind_tm_q.
     }
     etrans. 2: { apply assoc'. }
