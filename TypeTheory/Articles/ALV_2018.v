@@ -29,22 +29,14 @@ Require Import TypeTheory.CwF_TypeCat.CwF_SplitTypeCat_Cats.
 Definition split_typecat_structure_cat (C : category) : category.
 Admitted.
 
-Definition split_typecat'_structure_cat (C : category) : category.
-Admitted.
+Definition split_typecat'_structure_cat (C : category) : category
+  := sty'_structure_precat C.
 
 Definition cwf_structure_cat (C : category) : category.
 Admitted.
 
-Definition cwf'_structure_cat (C : category) : category.
-Admitted.
-
-Definition compatible_qq_morphism_structure_cat {C : category}
-  : disp_cat (cwf'_structure_cat C).
-Admitted.
-
-Definition compatible_term_structure_cat {C : category}
-  : disp_cat (split_typecat'_structure_cat C).
-Admitted.
+Definition cwf'_structure_cat (C : category) : category
+  := cwf'_structure_precat C.
 
 Definition rep_map_cat (C : category) : category.
 Admitted.
@@ -54,6 +46,10 @@ Admitted.
 
 Definition wk_rel_univ_structure_cat (C : category) : category.
 Admitted.
+
+(** ** Univalence of these categories. *)
+
+Definition 
 
 (**** Below here: cannibalised from ALV_2017.v ****)
 (** * Equivalence of categories between split type structures and families structures *)
