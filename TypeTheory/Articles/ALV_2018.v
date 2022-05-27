@@ -43,9 +43,34 @@ Admitted.
 
 (** ** Univalence of these categories. *)
 
-Definition 
+Definition is_univalent_split_typecat_structure (C : category)
+  : is_univalent (split_typecat_structure_cat C).
+Admitted.
 
-(**** Below here: cannibalised from ALV_2017.v ****)
+Definition is_univalent_split_typecat'_structure_cat (C : category)
+  : is_univalent (split_typecat'_structure_cat C).
+Admitted.
+
+Definition is_univalent_cwf_structure_cat (C : category)
+  : is_univalent (cwf_structure_cat C).
+Admitted.
+
+Definition is_univalent_cwf'_structure_cat (C : category)
+  : is_univalent (cwf'_structure_precat C).
+Admitted.
+
+Definition is_univalent_rep_map_cat (C : category)
+  : is_univalent (rep_map_cat C).
+Admitted.
+
+Definition is_univalent_rel_univ_structure_cat (C : category)
+  : is_univalent (rel_univ_structure_cat C).
+Admitted.
+
+Definition is_univalent_wk_rel_univ_structure_cat (C : category)
+  : is_univalent (wk_rel_univ_structure_cat C).
+Admitted.
+
 (** * Equivalence of categories between split type structures and families structures *)
 
 (** ** Equivalence between two versions of cwf structures *)
@@ -91,7 +116,7 @@ Definition isweq_from_cwf_to_rep {C : category} (C_univ : is_univalent C)
   : adj_equivalence_of_cats (functor_cwf_to_rep C).
 Admitted.
 
-(** * Transfer of [cwf_structure]s along weak equivalences *)
+(** * Functorial transfer results for various structures *)
 
 Definition transfer_cwf_weak_equivalence {C D : category} (F : C ⟶ D)
   : fully_faithful F → essentially_surjective F
@@ -100,15 +125,11 @@ Definition transfer_cwf_weak_equivalence {C D : category} (F : C ⟶ D)
 Admitted.
 (* TODO: perhaps show functorial in F also. *)
 
-(** * Transfer of [rep_map]s along weak equivalences *)
-
 Definition transfer_rep_map_weak_equivalence
   {C D : category} (F : C ⟶ D) 
   : fully_faithful F → essentially_surjective F
   → equivalence_of_cats (rep_map_cat C) (rep_map_cat D).
 Admitted.
-
-(** * Equivalence between [rep_map C] and [cwf (Rezk_completion C)] *)
 
 Definition equiv_cat_rep_map_cwf_Rezk (C : category)
   : equivalence_of_cats
@@ -116,8 +137,14 @@ Definition equiv_cat_rep_map_cwf_Rezk (C : category)
       (cwf_structure_cat (Rezk_completion C)).
 Admitted.
 
+(** * Comparison with comprehension categories *)
 
+(** (Bi)categories of comprehension categories, and the fullification adjunction *)
 
+(** Equivalece between (non-split) type-cat structures and full comprehension cat structures on a category *)
 
+(** Equivalence between split type-cat structures and discrete comprehension cat structures on a category *)
+
+(** Commutativity of the (split) type-cat inclusions modulo fullification *)
 
 
