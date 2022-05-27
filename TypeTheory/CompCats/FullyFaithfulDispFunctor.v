@@ -5,10 +5,7 @@
 *)
 
 (**
-
-Fully faithful displayed functors over identity functor on C
-with fixed target displayed categories are completely determined
-my their action on objects.
+Given a fixed displayed category D over C, pairs (D',F) of displayed cats D' with fully-faithful functors into D over C correspond just to families of objects with maps into ob D.
 
 Specifically we have an equivalence [ff_disp_functor_weq] between
 [ff_disp_functor] (an alias for [ff_disp_functor_on_objects])
