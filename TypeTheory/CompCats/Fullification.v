@@ -39,7 +39,7 @@ End Auxiliary.
 
 Section Fullification_Disp_Cat.
 
-  Context {C : category} (D D' : disp_cat C) (F : disp_functor (functor_identity _) D' D).
+  Context {C : category} {D D' : disp_cat C} (F : disp_functor (functor_identity _) D' D).
   
   Definition fullification_disp_cat_ob_mor : disp_cat_ob_mor C.
   Proof.
@@ -70,8 +70,37 @@ Section Fullification_Disp_Cat.
     apply fullification_disp_cat_axioms.
   Defined.
 
-  (* TODO: factorisation of F *)
+  Definition from_fullification_ob_mor
+    : disp_functor_data (functor_identity _) fullification_disp_cat D.
+  Proof.
+    exists (fun x xx => F x xx).
+    intros x y xx yy f ff; exact ff.
+  Defined.
 
+  Definition from_fullification_axioms
+    : disp_functor_axioms from_fullification_ob_mor.
+  Proof.
+    repeat split. (* Startling that this completes the proof! 
+    The reason is that under the expected “split”, all goals just need “refl”,
+    which is a 1-constructor inductive, so “split” finds that too. *)
+  Defined.
+
+  Definition from_fullification
+    : disp_functor (functor_identity _) fullification_disp_cat D.
+  Proof.
+    exists from_fullification_ob_mor; exact from_fullification_axioms.
+  Defined.
+
+  Definition from_fullification_ff
+    : disp_functor_ff from_fullification.
+  Proof.
+    intros ? ? ? ? ?; apply idisweq.
+  Defined.
+
+  (* TODO: some form of the universal property — this is a right bi-adjoint from “disp-cats-with-functor-to-D” to “disp-cats-with-ff-functor-to-D”. *)
+
+  (* TODO specifically: at least the unit map [D —> fullification F] *)
+  
 End Fullification_Disp_Cat.
 
 Section Fullification_Fibration.
