@@ -22,11 +22,14 @@ Require Import TypeTheory.Auxiliary.CategoryTheory.
 Require Import TypeTheory.CompCats.FullyFaithfulDispFunctor.
 
 Section Auxiliary.
-(* Some missing access functions for fibrations and comprehension cats.
-  TODO: split out into their own file(s), and unify with the more specialised access functions for _discrete_ comp cats given elsewhere. *)
+
+  (** ** Some missing access functions for fibrations and comprehension cats. *)
+  (** TODO: split out into their own file(s), and unify with the more specialised access functions for _discrete_ comp cats given elsewhere. *)
 
   Coercion disp_cat_from_fibration {C} : fibration C -> disp_cat C := pr1.
-  
+
+  Definition fib_cleaving {C} (T : fibration C) : cleaving T := pr2 T.
+
   Coercion types_fib {C} (T : comprehension_cat_structure C)
     : fibration C
   := (pr1 T,, pr1 (pr2 T)).
@@ -35,6 +38,19 @@ Section Auxiliary.
     : disp_functor (functor_identity C) T (disp_codomain C)
   := pr1 (pr2 (pr2 T)).
 
+  (** ** Misc lemmas *)
+  (* todo: too many different things called FF here!! *)
+  Lemma ff_reflects_cartesian
+      {C C' : category} {F : functor C C'}
+      {D} {D'} (FF : disp_functor F D D')
+      (FF_ff : disp_functor_ff FF)
+      {x x' : C} (f : x' --> x) {xx : D x} {xx'} (ff : xx' -->[f] xx)
+      (FF_ff_cart : is_cartesian (#FF ff)%mor_disp)
+    : is_cartesian ff.
+  Proof.
+    admit.
+  Admitted.
+      
 End Auxiliary.
 
 Section Fullification_Disp_Cat.
@@ -105,12 +121,35 @@ End Fullification_Disp_Cat.
 
 Section Fullification_Fibration.
 
-  Context {C : category} (D D' : fibration C)
-          (F : cartesian_disp_functor (functor_identity _) D D').
-  
+  Context {C : category} {D : disp_cat C} {D' : fibration C}
+          (F : cartesian_disp_functor (functor_identity _) D' D).
+
   Definition fullification_fibration : fibration C.
+    exists (fullification_disp_cat F).
+    intros x x' f xx.
+    set (d'_ff_ffcart := fib_cleaving D' _ _ f xx).
+    exists (pr1 d'_ff_ffcart).
+    exists (# F (pr12 d'_ff_ffcart))%mor_disp.
+    apply (ff_reflects_cartesian (from_fullification F)).
+    { apply from_fullification_ff. }
+    apply F.
+    exact (pr22 _).
+  Defined.
+
+  Definition from_fullification_is_cartesian
+    : is_cartesian_disp_functor (from_fullification F).
+  Proof.
+    (* probably use: to show a map from a fibration cartesian,
+     enough to show it preserves cartesianness of given lifts *)
   Admitted.
 
+  Definition from_fullification_fibration
+    : cartesian_disp_functor (functor_identity _) (fullification_fibration) D.
+  Proof.
+    exists (from_fullification F). apply from_fullification_is_cartesian. 
+  Defined.
+
+  (* TODO: specialise universal property of fullification from disp-cats to fibrations *)
 End Fullification_Fibration.
 
 Section Fullification.
