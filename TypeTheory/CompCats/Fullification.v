@@ -48,7 +48,28 @@ Section Auxiliary.
   Defined.
 
   (** ** Misc lemmas *)
-  (* todo: too many different things called FF here!! *)
+
+  Lemma weq_from_fully_faithful_disp
+      {C C' : category} {F : functor C C'}
+      {D} {D'} (FF : disp_functor F D D')
+      (FF_ff : disp_functor_ff FF)
+      {x x' : C} (f : x --> x') {xx : D x} {xx': D x'}
+    : (xx -->[f] xx') ≃ (FF x xx -->[#F f] FF x' xx'). 
+  Proof.
+    exists (# FF)%mor_disp. apply FF_ff.
+  Defined.
+
+  (* TODO: too many different things called FF here!!  Probably rename “ff_disp_functor” to something less abbreviated upstream. *)
+  Lemma fully_faithul_disp_inv_hom
+      {C C' : category} {F : functor C C'}
+      {D} {D'} (FF : disp_functor F D D')
+      (FF_ff : disp_functor_ff FF)
+      {x x' : C} (f : x --> x') {xx : D x} {xx': D x'}
+    : (FF x xx -->[#F f] FF x' xx') -> (xx -->[f] xx'). 
+  Proof.
+    apply invweq, weq_from_fully_faithful_disp, FF_ff.
+  Defined.
+
   Lemma ff_reflects_cartesian
       {C C' : category} {F : functor C C'}
       {D} {D'} (FF : disp_functor F D D')
@@ -57,8 +78,27 @@ Section Auxiliary.
       (FF_ff_cart : is_cartesian (#FF ff)%mor_disp)
     : is_cartesian ff.
   Proof.
-    admit.
-  Admitted.
+    intros x'' g xx'' hh.
+    eapply iscontrweqb.
+    2: { 
+      use (FF_ff_cart (F x'') (#F g) (FF _ xx'')).
+      refine (transportf _ _ (# FF hh)%mor_disp).
+      apply functor_comp.
+    }
+    use weqtotal2.
+    apply weq_from_fully_faithful_disp. { apply FF_ff. }
+    simpl. intros gg.
+    apply weqimplimpl; try apply homsets_disp.
+    - intros e_gf_h.
+      etrans. 2: { apply maponpaths, maponpaths, e_gf_h. }
+      apply transportf_transpose_right, pathsinv0.
+      apply disp_functor_comp.
+    - intros e_Fgf_Fh.
+      eapply invmaponpathsincl. { apply isinclweq, FF_ff. }
+      simpl. etrans. { apply disp_functor_comp. }
+      apply transportb_transpose_left.
+      assumption.
+  Defined.
       
 End Auxiliary.
 
