@@ -32,11 +32,20 @@ Section Auxiliary.
 
   Coercion types_fib {C} (T : comprehension_cat_structure C)
     : fibration C
-  := (pr1 T,, pr1 (pr2 T)).
+  := (pr1 T,, pr12 T).
 
   Definition comprehension {C} (T : comprehension_cat_structure C)
-    : disp_functor (functor_identity C) T (disp_codomain C)
-  := pr1 (pr2 (pr2 T)).
+    : cartesian_disp_functor (functor_identity C) (types_fib T) (disp_codomain C)
+  := (pr122 T,, pr222 T).
+
+  Definition make_comprehension_cat_structure {C}
+      (T : fibration C)
+      (comp : cartesian_disp_functor (functor_identity C) T (disp_codomain C))
+    : comprehension_cat_structure C.
+  Proof.
+    exists T. exists (fib_cleaving T).
+    exists comp. apply cartesian_disp_functor_is_cartesian.
+  Defined.
 
   (** ** Misc lemmas *)
   (* todo: too many different things called FF here!! *)
@@ -121,22 +130,33 @@ End Fullification_Disp_Cat.
 
 Section Fullification_Fibration.
 
-  Context {C : category} {D : disp_cat C} {D' : fibration C}
-          (F : cartesian_disp_functor (functor_identity _) D' D).
+  Context {C : category} {D : disp_cat C}.
 
-  Definition fullification_fibration : fibration C.
-    exists (fullification_disp_cat F).
+  Definition fullification_cleaving
+      {D' : disp_cat C} (D'_fib : cleaving D')
+      (F : cartesian_disp_functor (functor_identity _) D' D)
+    : cleaving (fullification_disp_cat F).
+  Proof.
     intros x x' f xx.
-    set (d'_ff_ffcart := fib_cleaving D' _ _ f xx).
+    set (d'_ff_ffcart := D'_fib _ _ f xx).
     exists (pr1 d'_ff_ffcart).
     exists (# F (pr12 d'_ff_ffcart))%mor_disp.
-    apply (ff_reflects_cartesian (from_fullification F)).
-    { apply from_fullification_ff. }
-    apply F.
+    eapply ff_reflects_cartesian. { apply from_fullification_ff. }
+    apply cartesian_disp_functor_is_cartesian.
     exact (pr22 _).
   Defined.
 
+  Definition fullification_fibration
+      {D' : fibration C}
+      (F : cartesian_disp_functor (functor_identity _) D' D)
+    : fibration C.
+  Proof.
+    exists (fullification_disp_cat F). apply fullification_cleaving, D'.
+  Defined.
+
   Definition from_fullification_is_cartesian
+      {D' : fibration C}
+      (F : cartesian_disp_functor (functor_identity _) D' D)
     : is_cartesian_disp_functor (from_fullification F).
   Proof.
     (* probably use: to show a map from a fibration cartesian,
@@ -144,7 +164,9 @@ Section Fullification_Fibration.
   Admitted.
 
   Definition from_fullification_fibration
-    : cartesian_disp_functor (functor_identity _) (fullification_fibration) D.
+      {D' : fibration C}
+      (F : cartesian_disp_functor (functor_identity _) D' D)
+    : cartesian_disp_functor (functor_identity _) (fullification_fibration F) D.
   Proof.
     exists (from_fullification F). apply from_fullification_is_cartesian. 
   Defined.
@@ -154,8 +176,14 @@ End Fullification_Fibration.
 
 Section Fullification.
   Context {C : category} (T : comprehension_cat_structure C).
-  
+
   Definition fullification_compcat : comprehension_cat_structure C.
-  Admitted.
+  Proof.
+    use make_comprehension_cat_structure.
+    - exact (fullification_fibration (comprehension T)).
+    - apply from_fullification_fibration.
+  Defined.
+
+  (* TODO: universal property *)
 
 End Fullification.
