@@ -162,11 +162,17 @@ Section Fullification_Disp_Cat.
     intros ? ? ? ? ?; apply idisweq.
   Defined.
 
-  (* TODO: some form of the universal property — this is a right bi-adjoint from “disp-cats-with-functor-to-D” to “disp-cats-with-ff-functor-to-D”. *)
+  (* There are several possible ways to state and prove the universal property —that this is a right bi-adjoint from “disp-cats-with-functor-to-D” to “disp-cats-with-ff-functor-to-D”.
 
-  (* TODO specifically: at least the unit map [D —> fullification F] *)
-  
+  Option 1: “there’s an equivalence [ (D' —> D'') ~ (fullif D' -> D'') ] for any D'' fully-faithful over D”; then defined the unit [ D' —> fullif D' ] as corresponding to the identity under this
+
+  Option 2: define the unit [D' —> fullif D'] explicitly, then show that composition with it induces an equivalence. 
+
+  Either way: How to show equivalence of these complex objects?  Oe way: exhibit them as a univalent displayed category, and show this is an equivalence of cats.  But will it be univaleny in general?  Probably not — where as this u.m.p. really should be!  Perhaps: just show it explicitly? 
+
+  In fact: all this should be a little more general, and needs to be, to give the eventually desired universal property of the fullification of a comp cat.  It should be generalised to over a functor not the identity. *)
 End Fullification_Disp_Cat.
+
 
 Section Fullification_Fibration.
 
