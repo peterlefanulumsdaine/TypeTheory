@@ -104,13 +104,13 @@ End Auxiliary.
 
 Section Fullification_Disp_Cat.
 
-  Context {C : category} {D D' : disp_cat C}
-          (FF : disp_functor (functor_identity _) D' D).
+  Context {C : category} {E D : disp_cat C}
+          (FF : disp_functor (functor_identity _) D E).
 (* This construction can be generalised to work over a functor [ F : C' -> C ], but in the general case, the structure on the fullification gets complicated by transports along [functor_id], [functor_comp].  Since this simpler special case is what we expect to use, we give just this for now, to keep it tractable. *)
   
   Definition fullification_disp_cat_ob_mor : disp_cat_ob_mor C.
   Proof.
-    exists D'.
+    exists D.
     intros x y xx yy f. exact ((FF x xx) -->[f] (FF y yy)).
   Defined.
 
@@ -138,7 +138,7 @@ Section Fullification_Disp_Cat.
   Defined.
 
   Definition from_fullification_ob_mor
-    : disp_functor_data (functor_identity _) fullification_disp_cat D.
+    : disp_functor_data (functor_identity _) fullification_disp_cat E.
   Proof.
     exists (fun x xx => FF x xx).
     intros x y xx yy f ff; exact ff.
@@ -153,7 +153,7 @@ Section Fullification_Disp_Cat.
   Defined.
 
   Definition from_fullification
-    : disp_functor (functor_identity _) fullification_disp_cat D.
+    : disp_functor (functor_identity _) fullification_disp_cat E.
   Proof.
     exists from_fullification_ob_mor; exact from_fullification_axioms.
   Defined.
@@ -173,20 +173,68 @@ Section Fullification_Disp_Cat.
   Either way: How to show equivalence of these complex objects?  Oe way: exhibit them as a univalent displayed category, and show this is an equivalence of cats.  But will it be univaleny in general?  Probably not — where as this u.m.p. really should be!  Perhaps: just show it explicitly? 
 
   In fact: all this should be a little more general, and needs to be, to give the eventually desired universal property of the fullification of a comp cat.  It should be generalised to over a functor not the identity. *)
+
+  Definition fullification_unit_data
+    : disp_functor_data (functor_identity _) D fullification_disp_cat.
+  Proof.
+    exists (fun c d => d).
+    intros ? ? ? ? ?; apply (# FF)%mor_disp.    
+  Defined.
+
+  Definition fullification_unit_axioms
+    : disp_functor_axioms fullification_unit_data.
+  Proof.
+    split.
+    - apply @disp_functor_id.
+    - apply @disp_functor_comp.
+  Defined.
+
+  Definition fullification_unit
+    : disp_functor (functor_identity _) D fullification_disp_cat.
+  Proof.
+    exists fullification_unit_data.
+    apply fullification_unit_axioms.
+  Defined.
+
+  (* Note: This is neither the simplest form of the universal property of fullification, nor the most general.
+
+  The simplest form would take C'=C, G=id, D'=D: in other words, it just compares [fullification FF] with other factorisations of [FF] through a fully-faithful functor into [D].
+
+  A very general form could have [FF'] living over a further functor [C' -> C''] (and could also have started with [FF] living over a non-identity functor).  However, it complicates the statements and constructions a lot.
+
+  The intermediate form we give here is just what’s needed to show that the fullification of _comprehension categories_ is a reflection into the sub-2-category of full comp-cats.
+ *)
+  (* TODO: consider naming! *)
+  Definition fullification_universal_property_general
+    {C' : category} {D' E' : disp_cat C'}
+    (FF' : disp_functor (functor_identity _) D' E')
+    {G : functor C C'} (GE : disp_functor G E E')
+  : (∑ (GD : disp_functor G D D'),
+      transportf (fun G' => disp_functor G' _ _) (functor_identity_right _ _ _) 
+                 (disp_functor_composite GD FF')
+      = disp_functor_composite FF GE)
+   ≃ 
+    (∑ (GD : disp_functor G fullification_disp_cat D'),
+      transportf (fun G' => disp_functor G' _ _) (functor_identity_right _ _ _) 
+                 (disp_functor_composite GD FF')
+      = disp_functor_composite from_fullification GE).
+  Proof.
+  Admitted.
+
 End Fullification_Disp_Cat.
 
 
 Section Fullification_Fibration.
 
-  Context {C : category} {D : disp_cat C}.
+  Context {C : category} {E : disp_cat C}.
 
   Definition fullification_cleaving
-      {D' : disp_cat C} (D'_fib : cleaving D')
-      (FF : cartesian_disp_functor (functor_identity _) D' D)
+      {D : disp_cat C} (D_fib : cleaving D)
+      (FF : cartesian_disp_functor (functor_identity _) D E)
     : cleaving (fullification_disp_cat FF).
   Proof.
     intros x x' f xx.
-    set (d'_ff_ffcart := D'_fib _ _ f xx).
+    set (d'_ff_ffcart := D_fib _ _ f xx).
     exists (pr1 d'_ff_ffcart).
     exists (# FF (pr12 d'_ff_ffcart))%mor_disp.
     eapply ff_reflects_cartesian. { apply from_fullification_ff. }
@@ -195,16 +243,16 @@ Section Fullification_Fibration.
   Defined.
 
   Definition fullification_fibration
-      {D' : fibration C}
-      (FF : cartesian_disp_functor (functor_identity _) D' D)
+      {D : fibration C}
+      (FF : cartesian_disp_functor (functor_identity _) D E)
     : fibration C.
   Proof.
-    exists (fullification_disp_cat FF). apply fullification_cleaving, D'.
+    exists (fullification_disp_cat FF). apply fullification_cleaving, D.
   Defined.
 
   Definition from_fullification_is_cartesian
-      {D' : fibration C}
-      (FF : cartesian_disp_functor (functor_identity _) D' D)
+      {D : fibration C}
+      (FF : cartesian_disp_functor (functor_identity _) D E)
     : is_cartesian_disp_functor (from_fullification FF).
   Proof.
     (* probably use: to show a map from a fibration cartesian,
@@ -212,9 +260,9 @@ Section Fullification_Fibration.
   Admitted.
 
   Definition from_fullification_fibration
-      {D' : fibration C}
-      (FF : cartesian_disp_functor (functor_identity _) D' D)
-    : cartesian_disp_functor (functor_identity _) (fullification_fibration FF) D.
+      {D : fibration C}
+      (FF : cartesian_disp_functor (functor_identity _) D E)
+    : cartesian_disp_functor (functor_identity _) (fullification_fibration FF) E.
   Proof.
     exists (from_fullification FF). apply from_fullification_is_cartesian. 
   Defined.
