@@ -60,7 +60,7 @@ Section Auxiliary.
   Defined.
 
   (* TODO: too many different things called FF here!!  Probably rename “ff_disp_functor” to something less abbreviated upstream. *)
-  Lemma fully_faithul_disp_inv_hom
+  Lemma fully_faithful_disp_inv_hom
       {C C' : category} {F : functor C C'}
       {D} {D'} (FF : disp_functor F D D')
       (FF_ff : disp_functor_ff FF)
@@ -196,18 +196,111 @@ Section Fullification_Disp_Cat.
     apply fullification_unit_axioms.
   Defined.
 
-  (* Note: This is neither the simplest form of the universal property of fullification, nor the most general.
+  (** The universal property we give here is neither the simplest form of the universal property of fullification, nor the most general.
 
   The simplest form would take C'=C, G=id, D'=D: in other words, it just compares [fullification FF] with other factorisations of [FF] through a fully-faithful functor into [D].
 
-  A very general form could have [FF'] living over a further functor [C' -> C''] (and could also have started with [FF] living over a non-identity functor).  However, it complicates the statements and constructions a lot.
+  A very general form could have [FF'] living over a further functor [C' -> C''] (and could also have started with [FF] living over a non-identity functor).  However, it complicates the statements and constructions a lot. The most general form is probably best formulated as a “displayed factorisation system”: showing that “injective on objects” functors have unique lifts against “full and faithful”.
 
   The intermediate form we give here is just what’s needed to show that the fullification of _comprehension categories_ is a reflection into the sub-2-category of full comp-cats.
+
+  We preview it here, before building it up gradually below. 
  *)
   (* TODO: consider naming! *)
+  (* TODO: in fact this probably isn’t the right version to give (though this should be true too): we will want a version with a natural isomorphism instead of an equality; and as such, its uniqueness will probably hold only up to isomorphism. *)
   Definition fullification_universal_property_general
     {C' : category} {D' E' : disp_cat C'}
     (FF' : disp_functor (functor_identity _) D' E')
+    {G : functor C C'} (GE : disp_functor G E E') (GE_ff : disp_functor_ff GE)
+  : (∑ (GD : disp_functor G D D'),
+      transportf (fun G' => disp_functor G' _ _) (functor_identity_right _ _ _) 
+                 (disp_functor_composite GD FF')
+      = disp_functor_composite FF GE)
+   ≃ 
+    (∑ (GD : disp_functor G fullification_disp_cat D'),
+      transportf (fun G' => disp_functor G' _ _) (functor_identity_right _ _ _) 
+                 (disp_functor_composite GD FF')
+      = disp_functor_composite from_fullification GE).
+  Proof.
+  Abort.
+
+  Section Strict_Universal_Property.
+    (* The version we start with is _strict_ insofar as it assumes an equality of composites, not just a natural iso. *)
+    
+    Context 
+        {C' : category} {D' E' : disp_cat C'}
+        (FF' : disp_functor (functor_identity _) D' E')
+          (FF_ff : disp_functor_ff FF')
+        {G : functor C C'} (GE : disp_functor G E E')
+        (GD : disp_functor G D D')
+        (e : transportf (fun G' => disp_functor G' _ _) (functor_identity_right _ _ _) 
+                        (disp_functor_composite GD FF')
+             = disp_functor_composite FF GE).
+(*
+          D —————FF———> E _______    GE
+           \    \_____ /         \________
+            \         X______GD           \________>
+             \       /       \—————> D' ————FF'—————> E'
+              \     /                 \            /
+               \   /                   \          /
+                V V                     \        /
+                 C ____                  \      /
+                       \_____ G           \    /
+                             \______       V  V
+                                    \—————> C'
+*)
+    Local Definition FF'_GD_to_GE_FF
+      : disp_nat_trans (nat_trans_functor_id_right _)
+          (disp_functor_composite GD FF') (disp_functor_composite FF GE).
+    Proof.
+      (* convert [e] to pointwise paths, and use [idtoiso_disp]? but then need to show naturality by hand.
+         or generalise the composites to arbitrary functors, and then destruct [e]?  but then don’t get [idtoiso_disp] as the components, so can’t use lemmas.
+         hmmm… *) 
+    Admitted.
+
+    Local Definition is_iso_FF'_GD_to_GE_FF {x:C} (xx:D x)
+      : is_iso_disp (identity_iso _) (FF'_GD_to_GE_FF x xx).
+    Proof.
+    Admitted.
+
+    Local Definition FF'_GD_iso_GE_FF {x:C} (xx:D x)
+      : iso_disp (identity_iso _) (FF' _ (GD _ xx)) (GE _ (FF _ xx)).
+    Proof.
+    Admitted.
+
+    Definition from_fullification_general_data
+      : disp_functor_data G fullification_disp_cat D'.
+    Proof.
+      exists GD.
+      intros x y xx yy f ff.
+      apply (fully_faithful_disp_inv_hom FF'). { assumption. }
+      simpl.
+      (* TODO: are there better idioms for composition with nat-isos-over-identity? could we set up a better interface? *)
+      refine (transportf _ (id_left _) _).
+      eapply comp_disp. { apply FF'_GD_iso_GE_FF. }
+      refine (transportf _ (id_right _) _).
+      eapply comp_disp. 2: { apply FF'_GD_iso_GE_FF. }
+      simpl. exact (#GE ff)%mor_disp.
+    Defined.
+
+    Definition from_fullification_general_axioms
+      : disp_functor_axioms from_fullification_general_data.
+    Proof.
+    Admitted.
+
+    Definition from_fullification_general
+      : disp_functor G fullification_disp_cat D'.
+    Proof.
+      exists from_fullification_general_data.
+      apply from_fullification_general_axioms.
+    Defined.
+
+  End Strict_Universal_Property.
+
+  Definition fullification_universal_property_general
+    {C' : category} {D' E' : disp_cat C'}
+    (FF' : disp_functor (functor_identity _) D' E')
+          (FF'_ff : disp_functor_ff FF')
     {G : functor C C'} (GE : disp_functor G E E')
   : (∑ (GD : disp_functor G D D'),
       transportf (fun G' => disp_functor G' _ _) (functor_identity_right _ _ _) 
