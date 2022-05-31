@@ -18,8 +18,11 @@ Require Import UniMath.CategoryTheory.All.
 
 Require Import TypeTheory.Auxiliary.Auxiliary.
 Require Import TypeTheory.Auxiliary.CategoryTheory.
+Require Import TypeTheory.Auxiliary.DisplayedCategories.
 
 Require Import TypeTheory.CompCats.FullyFaithfulDispFunctor.
+
+Local Open Scope hide_transport_scope. (* for calculations in displayed cats *)
 
 Section Auxiliary.
 
@@ -46,6 +49,48 @@ Section Auxiliary.
     exists T. exists (fib_cleaving T).
     exists comp. apply cartesian_disp_functor_is_cartesian.
   Defined.
+
+  (** ** Displayed natural isomorphisms *)
+  Arguments disp_functor_cat {_ _} _ _.
+
+  Definition disp_nat_iso
+      {C C' : category} {F G : functor C C'} (α : nat_iso F G)
+      {D : disp_cat C} {D' : disp_cat C'}
+      (FF : disp_functor F D D') (GG : disp_functor G D D')
+    : UU
+  := @iso_disp _ (disp_functor_cat D D') _ _ α FF GG.
+
+  Definition disp_nat_iso_of_id
+      {C C' : category} {F G : functor C C'} (e : F = G)
+      {D : disp_cat C} {D' : disp_cat C'}
+      (FF : disp_functor F D D') (GG : disp_functor G D D')
+      (ee : transportf (fun H => disp_functor H _ _) e FF = GG)
+    : disp_nat_iso (@idtoiso [_,_] _ _ e) FF GG.
+  Proof.
+    apply idtoiso_disp, ee.
+  Defined.
+
+  (** ** Missing access functions for displayed isomorphisms *)
+  
+  Definition iso_inv_disp
+      {C : category} {D : disp_cat C} {x y : C} {i : iso x y}
+      {xx : D x} {yy : D y} (ii : iso_disp i xx yy)
+    : yy -->[inv_from_iso i] xx
+  := pr12 ii.
+
+  Definition iso_after_iso_inv_disp
+      {C : category} {D : disp_cat C} {x y : C} {i : iso x y}
+      {xx : D x} {yy : D y} (ii : iso_disp i xx yy)
+    : (iso_inv_disp ii ;; ii)%mor_disp
+      = transportb _ (iso_after_iso_inv i) (id_disp yy)
+  := pr122 ii.
+
+  Definition iso_inv_after_iso_disp
+      {C : category} {D : disp_cat C} {x y : C} {i : iso x y}
+      {xx : D x} {yy : D y} (ii : iso_disp i xx yy)
+    : (ii ;; iso_inv_disp ii)%mor_disp
+      = transportb _ (iso_inv_after_iso i) (id_disp xx)
+  := pr222 ii.
 
   (** ** Misc lemmas *)
 
@@ -249,23 +294,15 @@ Section Fullification_Disp_Cat.
                              \______       V  V
                                     \—————> C'
 *)
-    Local Definition FF'_GD_to_GE_FF
-      : disp_nat_trans (nat_trans_functor_id_right _)
-          (disp_functor_composite GD FF') (disp_functor_composite FF GE).
-    Proof.
-      (* convert [e] to pointwise paths, and use [idtoiso_disp]? but then need to show naturality by hand.
-         or generalise the composites to arbitrary functors, and then destruct [e]?  but then don’t get [idtoiso_disp] as the components, so can’t use lemmas.
-         hmmm… *) 
-    Admitted.
+    Local Definition FF'_GD_iso_GE_FF
+      : disp_nat_iso _
+          (disp_functor_composite GD FF') (disp_functor_composite FF GE)
+    := disp_nat_iso_of_id _ _ _ e.
 
-    Local Definition is_iso_FF'_GD_to_GE_FF {x:C} (xx:D x)
-      : is_iso_disp (identity_iso _) (FF'_GD_to_GE_FF x xx).
-    Proof.
-    Admitted.
-
-    Local Definition FF'_GD_iso_GE_FF {x:C} (xx:D x)
+    Local Definition FF'_GD_iso_GE_FF_ptwise {x:C} (xx:D x)
       : iso_disp (identity_iso _) (FF' _ (GD _ xx)) (GE _ (FF _ xx)).
     Proof.
+      (* some wrestling with the above [disp_nat_iso]; perhaps unnecessary if we should have assumed a displayed nat iso from the start? *)
     Admitted.
 
     Definition from_fullification_general_data
@@ -275,18 +312,75 @@ Section Fullification_Disp_Cat.
       intros x y xx yy f ff.
       apply (fully_faithful_disp_inv_hom FF'). { assumption. }
       simpl.
-      (* TODO: are there better idioms for composition with nat-isos-over-identity? could we set up a better interface? *)
+      (* TODO: are there better idioms for composition with (nat-)isos-over-identity? could we set up a better interface? *)
       refine (transportf _ (id_left _) _).
-      eapply comp_disp. { apply FF'_GD_iso_GE_FF. }
+      eapply comp_disp. { use FF'_GD_iso_GE_FF_ptwise. }
       refine (transportf _ (id_right _) _).
-      eapply comp_disp. 2: { apply FF'_GD_iso_GE_FF. }
+      eapply comp_disp. 2: { apply (iso_inv_disp (FF'_GD_iso_GE_FF_ptwise _)). }
       simpl. exact (#GE ff)%mor_disp.
     Defined.
 
     Definition from_fullification_general_axioms
       : disp_functor_axioms from_fullification_general_data.
     Proof.
-    Admitted.
+      split.
+      - intros x xx. simpl.
+        apply invmap_eq. simpl.
+        (* rewrite RHS to (transport of) identity *)
+        unfold transportb. rewrite (disp_functor_transportf _ FF').
+        rewrite (disp_functor_id FF'). unfold transportb; rewrite transport_f_f.
+        (* rewrite LHS to (transport of) identity *)
+        rewrite mor_disp_transportf_prewhisker, transport_f_f.
+        cbn. rewrite (disp_functor_id GE).
+        unfold transportb; rewrite mor_disp_transportf_postwhisker,
+          mor_disp_transportf_prewhisker, transport_f_f.
+        rewrite id_left_disp. unfold transportb;
+          rewrite mor_disp_transportf_prewhisker, transport_f_f.
+        etrans. { apply maponpaths, 
+                    (iso_inv_after_iso_disp (FF'_GD_iso_GE_FF_ptwise xx)). }
+        rewrite transport_f_b.
+        apply transportf_paths, homset_property.
+      - intros x y z xx yy zz f g ff gg; simpl.
+        apply invmap_eq; simpl.
+        (* rewrite LHS to transport of composite, right-associated *)
+        etrans. { 
+          rewrite mor_disp_transportf_prewhisker, transport_f_f.
+          cbn; rewrite (disp_functor_comp GE).
+          unfold transportb. rewrite mor_disp_transportf_postwhisker,
+                               mor_disp_transportf_prewhisker, transport_f_f.
+          rewrite assoc_disp_var,  mor_disp_transportf_prewhisker, transport_f_f.
+          apply idpath.
+        }
+        (* rewrite RHS to transport of composite, right-associated to match LHS *)
+        etrans. 2: { apply pathsinv0.
+          unfold transportb. rewrite (disp_functor_transportf _ FF').
+          rewrite (disp_functor_comp FF').
+          unfold transportb; rewrite transport_f_f.
+          etrans. { apply maponpaths, maponpaths. use homotweqinvweq. }
+          etrans. { apply maponpaths, maponpaths_2. use homotweqinvweq. }
+          rewrite mor_disp_transportf_postwhisker,
+            4 mor_disp_transportf_prewhisker,
+            mor_disp_transportf_postwhisker,
+            4 transport_f_f.
+          etrans. { apply maponpaths, maponpaths_2, assoc_disp. }
+          unfold transportb; 
+            rewrite mor_disp_transportf_postwhisker, transport_f_f.
+          rewrite assoc_disp_var, transport_f_f.
+          etrans. { apply maponpaths, maponpaths.
+            rewrite assoc_disp.
+            apply maponpaths, maponpaths_2. 
+            apply (iso_after_iso_inv_disp (FF'_GD_iso_GE_FF_ptwise _)).
+          }
+          unfold transportb.
+          rewrite mor_disp_transportf_postwhisker, id_left_disp.
+          unfold transportb. rewrite 2 transport_f_f,
+            mor_disp_transportf_prewhisker, transport_f_f.
+          rewrite assoc_disp_var.
+          apply transport_f_f.
+       }
+       apply transportf_paths, homset_property.
+    Qed.
+    (* TODO: Quite slow here!  Would it be quicker using explicit algebra instead of rewrite? *)
 
     Definition from_fullification_general
       : disp_functor G fullification_disp_cat D'.
