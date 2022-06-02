@@ -50,26 +50,6 @@ Section Auxiliary.
     exists comp. apply cartesian_disp_functor_is_cartesian.
   Defined.
 
-  (** ** Displayed natural isomorphisms *)
-  Arguments disp_functor_cat {_ _} _ _.
-
-  Definition disp_nat_iso
-      {C C' : category} {F G : functor C C'} (α : nat_iso F G)
-      {D : disp_cat C} {D' : disp_cat C'}
-      (FF : disp_functor F D D') (GG : disp_functor G D D')
-    : UU
-  := @iso_disp _ (disp_functor_cat D D') _ _ α FF GG.
-
-  Definition disp_nat_iso_of_id
-      {C C' : category} {F G : functor C C'} (e : F = G)
-      {D : disp_cat C} {D' : disp_cat C'}
-      (FF : disp_functor F D D') (GG : disp_functor G D D')
-      (ee : transportf (fun H => disp_functor H _ _) e FF = GG)
-    : disp_nat_iso (@idtoiso [_,_] _ _ e) FF GG.
-  Proof.
-    apply idtoiso_disp, ee.
-  Defined.
-
   (** ** Missing access functions for displayed isomorphisms *)
   
   Definition iso_inv_disp
@@ -91,6 +71,85 @@ Section Auxiliary.
     : (ii ;; iso_inv_disp ii)%mor_disp
       = transportb _ (iso_inv_after_iso i) (id_disp xx)
   := pr222 ii.
+
+  (** ** Displayed natural isomorphisms *)
+  Arguments disp_functor_cat {_ _} _ _.
+
+  Definition disp_nat_iso
+      {C C' : category} {F G : functor C C'} (α : nat_iso F G)
+      {D : disp_cat C} {D' : disp_cat C'}
+      (FF : disp_functor F D D') (GG : disp_functor G D D')
+    : UU
+  := @iso_disp _ (disp_functor_cat D D') _ _ α FF GG.
+
+  Definition disp_nat_iso_of_id
+      {C C' : category} {F G : functor C C'} (e : F = G)
+      {D : disp_cat C} {D' : disp_cat C'}
+      (FF : disp_functor F D D') (GG : disp_functor G D D')
+      (ee : transportf (fun H => disp_functor H _ _) e FF = GG)
+    : disp_nat_iso (@idtoiso [_,_] _ _ e) FF GG.
+  Proof.
+    apply idtoiso_disp, ee.
+  Defined.
+
+  (* TODO: unify
+  [UniMath.CategoryTheory.Core.NaturalTransformations.nat_iso],
+  [UniMath.CategoryTheory.RepresentableFunctors.Precategories.nat_iso]!
+  This key function is defined for the former but not the latter…
+   *)
+  Definition nat_iso_pointwise_iso
+      {C C' : category} {F G : functor C C'} (α : nat_iso F G) (c:C)
+    : iso (F c) (G c).
+  Proof.
+    exists ((α : nat_trans _ _) c).
+    apply is_iso_from_is_z_iso.
+    exists (((inv_from_iso α) : nat_trans _ _) c).
+    split.
+    - apply (nat_trans_eq_pointwise (iso_inv_after_iso α)).
+    - apply (nat_trans_eq_pointwise (iso_after_iso_inv α)).
+  Defined.
+
+  Definition disp_nat_iso_pointwise_iso
+      {C C' : category} {F G : functor C C'} {α : nat_iso F G}
+      {D : disp_cat C} {D' : disp_cat C'}
+      {FF : disp_functor F D D'} {GG : disp_functor G D D'}
+      (αα : disp_nat_iso α FF GG) {x:C} (xx : D x)
+    : iso_disp (nat_iso_pointwise_iso α x) (FF _ xx) (GG _ xx).
+  Proof.
+    exists (((mor_disp_from_iso αα) : disp_nat_trans _ _ _) x xx). 
+    set (β := (((inv_mor_disp_from_iso (αα : iso_disp _ _ _)) : disp_nat_trans _ _ _) x xx)). 
+    use tpair.
+    { refine (transportb _ _ β).
+      apply inv_from_iso_from_is_z_iso. (* Ugh! *) 
+    }
+    split; admit. (* TODO: revisit once [is_iso] refactored to use [is_z_iso] upstream! *)
+  Admitted.
+
+  Lemma idtoiso_functor_identity 
+        {C C' : category} {F G : functor C C'} (e : F = G) (x:C)
+      : ((@idtoiso [_,_] _ _ e : _ --> _) : nat_trans _ _) x
+        = idtoiso (toforallpaths (maponpaths pr1 (maponpaths pr1 e)) x).
+  Proof.
+    destruct e. apply idpath.
+  Defined.
+  
+  Lemma idtoiso_functor_identity_right
+        {C C' : category} (F : functor C C') {x:C}
+      : ((@idtoiso [_,_] _ _ (functor_identity_right _ _ F)
+           : _ --> _) : nat_trans _ _) x
+        = id _.
+  Proof.
+    etrans. { apply idtoiso_functor_identity. }
+    etrans. { apply maponpaths, maponpaths.
+      refine (maponpaths (fun e => toforallpaths e x) _). 
+      etrans. { apply maponpathscomp. }
+      unfold functor_identity_right.
+      etrans. { 
+        refine (maponpathscomp (λ p : is_functor _, _)
+                               (λ x0 : C ⟶ C', pr11 x0) _). }
+      apply maponpaths_for_constant_function. }
+    cbn. apply idpath.
+  Qed. (* slow here! *)
 
   (** ** Misc lemmas *)
 
@@ -299,8 +358,10 @@ Section Fullification_Disp_Cat.
     Local Definition FF'_GD_iso_GE_FF_ptwise {x:C} (xx:D x)
       : iso_disp (identity_iso _) (FF' _ (GD _ xx)) (GE _ (FF _ xx)).
     Proof.
-      (* some wrestling to extract this from [FF'_GD_iso_GE_FF] *)
-    Admitted.
+      refine (transportf (fun i => iso_disp i _ _) _
+          (disp_nat_iso_pointwise_iso FF'_GD_iso_GE_FF xx)).
+      apply eq_iso, idtoiso_functor_identity_right.
+    Defined.
 
     Definition from_fullification_general_data
       : disp_functor_data G fullification_disp_cat D'.
@@ -391,14 +452,14 @@ Section Fullification_Disp_Cat.
 
   Section Strict_Universal_Property.
     (* Following the pseudo universal property above, we now give the _strict_ one, with an equality of composites, not just a natural iso. *)
-    
-    Context 
+
+    Context
         {C' : category} {D' E' : disp_cat C'}
         (FF' : disp_functor (functor_identity _) D' E')
           (FF_ff : disp_functor_ff FF')
         {G : functor C C'} (GE : disp_functor G E E')
         (GD : disp_functor G D D')
-        (e : transportf (fun G' => disp_functor G' _ _) (functor_identity_right _ _ _) 
+        (e : transportf (fun G' => disp_functor G' _ _) (functor_identity_right _ _ _)
                         (disp_functor_composite GD FF')
              = disp_functor_composite FF GE).
 (*
