@@ -252,7 +252,7 @@ Section Fullification_Disp_Cat.
   We preview it here, before building it up gradually below. 
  *)
   (* TODO: consider naming! *)
-  (* TODO: in fact this probably isn’t the right version to give (though this should be true too): we will want a version with a natural isomorphism instead of an equality; and as such, its uniqueness will probably hold only up to isomorphism. *)
+  (* TODO: in fact this probably isn’t the right version to give (though this should be true too): we will want a version with a natural isomorphism instead of an equality; and as such, its uniqueness will probably hold only up to isomorphism.  Adapt it to the weak version! *)
   Definition fullification_universal_property_general
     {C' : category} {D' E' : disp_cat C'}
     (FF' : disp_functor (functor_identity _) D' E')
@@ -269,18 +269,19 @@ Section Fullification_Disp_Cat.
   Proof.
   Abort.
 
-  Section Strict_Universal_Property.
-    (* The version we start with is _strict_ insofar as it assumes an equality of composites, not just a natural iso. *)
-    
+  Section Pseudo_Universal_Property.
+  (** The version we start with is _pseudo_ in that it assumes just a natural iso of composites, not an equality. *)
+
     Context 
         {C' : category} {D' E' : disp_cat C'}
         (FF' : disp_functor (functor_identity _) D' E')
           (FF_ff : disp_functor_ff FF')
         {G : functor C C'} (GE : disp_functor G E E')
         (GD : disp_functor G D D')
-        (e : transportf (fun G' => disp_functor G' _ _) (functor_identity_right _ _ _) 
-                        (disp_functor_composite GD FF')
-             = disp_functor_composite FF GE).
+        (FF'_GD_iso_GE_FF : disp_nat_iso
+           (@idtoiso [_,_] _ _ (functor_identity_right C C' G))
+           (disp_functor_composite GD FF')
+           (disp_functor_composite FF GE)).
 (*
           D —————FF———> E _______    GE
            \    \_____ /         \________
@@ -294,15 +295,11 @@ Section Fullification_Disp_Cat.
                              \______       V  V
                                     \—————> C'
 *)
-    Local Definition FF'_GD_iso_GE_FF
-      : disp_nat_iso _
-          (disp_functor_composite GD FF') (disp_functor_composite FF GE)
-    := disp_nat_iso_of_id _ _ _ e.
 
     Local Definition FF'_GD_iso_GE_FF_ptwise {x:C} (xx:D x)
       : iso_disp (identity_iso _) (FF' _ (GD _ xx)) (GE _ (FF _ xx)).
     Proof.
-      (* some wrestling with the above [disp_nat_iso]; perhaps unnecessary if we should have assumed a displayed nat iso from the start? *)
+      (* some wrestling to extract this from [FF'_GD_iso_GE_FF] *)
     Admitted.
 
     Definition from_fullification_general_data
@@ -389,9 +386,45 @@ Section Fullification_Disp_Cat.
       apply from_fullification_general_axioms.
     Defined.
 
+    (* TODO: uniqueness up to canonical natural iso *)
+  End Pseudo_Universal_Property.
+
+  Section Strict_Universal_Property.
+    (* Following the pseudo universal property above, we now give the _strict_ one, with an equality of composites, not just a natural iso. *)
+    
+    Context 
+        {C' : category} {D' E' : disp_cat C'}
+        (FF' : disp_functor (functor_identity _) D' E')
+          (FF_ff : disp_functor_ff FF')
+        {G : functor C C'} (GE : disp_functor G E E')
+        (GD : disp_functor G D D')
+        (e : transportf (fun G' => disp_functor G' _ _) (functor_identity_right _ _ _) 
+                        (disp_functor_composite GD FF')
+             = disp_functor_composite FF GE).
+(*
+          D —————FF———> E _______    GE
+           \    \_____ /         \________
+            \         X______GD           \________>
+             \       /       \—————> D' ————FF'—————> E'
+              \     /                 \            /
+               \   /                   \          /
+                V V                     \        /
+                 C ____                  \      /
+                       \_____ G           \    /
+                             \______       V  V
+                                    \—————> C'
+*)
+
+    Local Definition FF'_GD_iso_GE_FF
+      : disp_nat_iso _
+          (disp_functor_composite GD FF') (disp_functor_composite FF GE)
+    := disp_nat_iso_of_id _ _ _ e.
+
+    (* TODO: deduce existence from existence in the pseudo-case; then give the uniqueness-up-to-equality for the strict case *)
   End Strict_Universal_Property.
 
-  Definition fullification_universal_property_general
+  (* TODO: give the weak version too! *)
+  Definition fullification_strict_universal_property_general
     {C' : category} {D' E' : disp_cat C'}
     (FF' : disp_functor (functor_identity _) D' E')
           (FF'_ff : disp_functor_ff FF')
