@@ -132,6 +132,15 @@ Section Auxiliary.
   Proof.
     destruct e. apply idpath.
   Defined.
+
+  Lemma maponpaths_pr1_functor_identity_right
+        {C C' : category} (F : functor C C')
+    : maponpaths pr1 (functor_identity_right _ _ F) = idpath _.
+  Proof.
+    unfold functor_identity_right.
+    etrans. { refine (maponpathscomp (λ p : is_functor _, _) _ _). }
+    apply maponpaths_for_constant_function.
+  Qed. (* slow here! *)
   
   Lemma idtoiso_functor_identity_right
         {C C' : category} (F : functor C C') {x:C}
@@ -140,16 +149,12 @@ Section Auxiliary.
         = id _.
   Proof.
     etrans. { apply idtoiso_functor_identity. }
-    etrans. { apply maponpaths, maponpaths.
-      refine (maponpaths (fun e => toforallpaths e x) _). 
-      etrans. { apply maponpathscomp. }
-      unfold functor_identity_right.
-      etrans. { 
-        refine (maponpathscomp (λ p : is_functor _, _)
-                               (λ x0 : C ⟶ C', pr11 x0) _). }
-      apply maponpaths_for_constant_function. }
-    cbn. apply idpath.
-  Qed. (* slow here! *)
+    etrans. { eapply maponpaths, maponpaths,
+                (maponpaths (fun e => toforallpaths e x)), maponpaths.
+              apply maponpaths_pr1_functor_identity_right.
+    }
+    apply idpath.
+  Qed.
 
   (** ** Misc lemmas *)
 
@@ -311,7 +316,7 @@ Section Fullification_Disp_Cat.
   We preview it here, before building it up gradually below. 
  *)
   (* TODO: consider naming! *)
-  (* TODO: in fact this probably isn’t the right version to give (though this should be true too): we will want a version with a natural isomorphism instead of an equality; and as such, its uniqueness will probably hold only up to isomorphism.  Adapt it to the weak version! *)
+  (* TODO: in fact this probably isn’t the right version to give (though this should be true too): we will want a “pseudo” version with a natural isomorphism instead of an equality; and as such, its uniqueness will probably hold only up to isomorphism.  Adapt it to the weak version! *)
   Definition fullification_universal_property_general
     {C' : category} {D' E' : disp_cat C'}
     (FF' : disp_functor (functor_identity _) D' E')
@@ -331,6 +336,7 @@ Section Fullification_Disp_Cat.
   Section Pseudo_Universal_Property.
   (** The version we start with is _pseudo_ in that it assumes just a natural iso of composites, not an equality. *)
 
+  (* TODO: can we refactor to naturally build up the _category_ of this data, displayed over the bicat of the base data, so that we can state the universal property concisely as “the category of litings is contractible”? *)
     Context 
         {C' : category} {D' E' : disp_cat C'}
         (FF' : disp_functor (functor_identity _) D' E')
@@ -344,7 +350,7 @@ Section Fullification_Disp_Cat.
 (*
           D —————FF———> E _______    GE
            \    \_____ /         \________
-            \         X______GD           \________>
+     ∀      \         X______GD           \________>
              \       /       \—————> D' ————FF'—————> E'
               \     /                 \            /
                \   /                   \          /
@@ -353,6 +359,14 @@ Section Fullification_Disp_Cat.
                        \_____ G           \    /
                              \______       V  V
                                     \—————> C'
+
+           D ————> (fullif D) ———> E
+            \         ⋮            |
+              \     ∃ ⋮            |
+                \     ⋮            |
+                  \   ⋮            |
+                    ◿ V            V
+                      D' ———f.f.—> E'
 *)
 
     Local Definition FF'_GD_iso_GE_FF_ptwise {x:C} (xx:D x)
@@ -370,7 +384,8 @@ Section Fullification_Disp_Cat.
       intros x y xx yy f ff.
       apply (fully_faithful_disp_inv_hom FF'). { assumption. }
       simpl.
-      (* TODO: are there better idioms for composition with (nat-)isos-over-identity? could we set up a better interface? *)
+      (* TODO: are there better idioms for composition with (nat-)isos-over-identity? could we set up a better interface? 
+e.g. functions [precompose_vertical], [postcompose_vertical]? *)
       refine (transportf _ (id_left _) _).
       eapply comp_disp. { use FF'_GD_iso_GE_FF_ptwise. }
       refine (transportf _ (id_right _) _).
