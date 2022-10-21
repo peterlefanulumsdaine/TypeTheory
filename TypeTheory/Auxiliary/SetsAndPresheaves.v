@@ -82,7 +82,7 @@ Proof.
 Qed.
 
 Lemma transportf_isotoid_pshf {C : category}
-    {P P' : preShv C} (i : iso P P')
+    {P P' : preShv C} (i : z_iso P P')
     {c : C} (x : P $p c)
   : transportf (fun Q => Q $p c)
       (isotoid _ (univalent_category_is_univalent (preShv C)) i) x
@@ -167,7 +167,7 @@ Proof.
   apply iscontraprop1.
   - apply invproofirrelevance.
     intros hk hk'.
-    apply subtypePath. { intro. apply isapropdirprod; apply setproperty. }
+    apply subtypePath. { intro. apply isapropdirprod; apply homset_property. }
     destruct hk as [hk [eh ek]], hk' as [hk' [eh' ek']]; simpl.
     apply funextsec; intro x.
     refine (H_uniqueness (h x) (k x) _ (_,,_) (_,,_));
