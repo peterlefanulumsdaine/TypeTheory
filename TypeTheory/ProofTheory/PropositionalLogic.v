@@ -146,8 +146,18 @@ Section Expressions.
 
 End Expressions.
 
-(* Substitution of derivations into contexts *)
+(* Generalised weakening of derivations, i.e. reindexing of assumption-contexts *)
+Section Weakening.
+
+  Definition weakening (Γ Δ : context)
+    := ∑ (f : Δ -> Γ), ∏ (i:Δ), Δ i = Γ (f i).
+
+
+End Weakening.
+
+(* Substitution of derivations under change of assumptions *)
 Section Substitution.
+
 
   Definition substitute_proof {Γ} {φ} (p : proof Γ φ) {Δ} (qs : forall i:Γ, proof Δ (Γ i)) : proof Δ φ.  
   Proof.
